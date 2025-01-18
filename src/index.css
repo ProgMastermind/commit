@@ -1,0 +1,56 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Add any global styles here */
+body {
+    @apply bg-[#090909] text-white;
+}
+
+/* Optional: Add custom scrollbar styles */
+::-webkit-scrollbar {
+    width: 8px;
+}
+
+::-webkit-scrollbar-track {
+    @apply bg-neutral-900;
+}
+
+::-webkit-scrollbar-thumb {
+    @apply bg-neutral-700 rounded-full;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    @apply bg-neutral-600;
+}
+
+@layer components {
+    .achievement-square {
+        @apply transition-all duration-300 cursor-pointer;
+    }
+
+    .achievement-square:hover {
+        @apply shadow-lg;
+        box-shadow: 0 0 15px rgba(0, 240, 255, 0.5);
+    }
+}
+
+.bg-gradient-glow {
+    position: relative;
+}
+
+.bg-gradient-glow::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(
+        45deg,
+        rgba(0, 240, 255, 0.15),
+        rgba(255, 0, 111, 0.15)
+    );
+    filter: blur(100px);
+    z-index: -1;
+}
