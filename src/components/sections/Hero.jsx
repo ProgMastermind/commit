@@ -1,6 +1,36 @@
 import { motion } from "framer-motion";
+import { useState, useEffect } from "react";
+import AuthModal from "../auth/AuthModal";
 
 const Hero = () => {
+  const [activeSquares, setActiveSquares] = useState(new Array(49).fill(false));
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+
+  useEffect(() => {
+    // Animate squares in a sequential pattern
+    const animateSquares = () => {
+      setActiveSquares(new Array(49).fill(false));
+      let currentIndex = 0;
+
+      const interval = setInterval(() => {
+        if (currentIndex < 49) {
+          setActiveSquares((prev) => {
+            const newSquares = [...prev];
+            newSquares[currentIndex] = true;
+            return newSquares;
+          });
+          currentIndex++;
+        } else {
+          clearInterval(interval);
+        }
+      }, 50); // Adjust timing as needed
+
+      return () => clearInterval(interval);
+    };
+
+    animateSquares();
+  }, []);
+
   return (
     <section id="hero" className="min-h-[70vh] bg-[#090909] pt-20">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col lg:flex-row items-center justify-between h-full gap-12">
@@ -28,9 +58,15 @@ const Hero = () => {
               className="px-8 py-3 bg-gradient-to-r from-[#00F0FF] to-[#FF006F] rounded-full text-white font-semibold hover:opacity-90 transition-all duration-300 transform hover:scale-105"
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
+              onClick={() => setIsAuthModalOpen(true)}
             >
               Try Now
             </motion.button>
+            {/* Add the AuthModal */}
+            <AuthModal
+              isOpen={isAuthModalOpen}
+              onClose={() => setIsAuthModalOpen(false)}
+            />
             <motion.a
               href="#features"
               className="px-8 py-3 border border-[#00F0FF] rounded-full text-white font-semibold hover:bg-[#00F0FF]/10 transition-all duration-300"
@@ -54,14 +90,19 @@ const Hero = () => {
               {[...Array(49)].map((_, index) => (
                 <motion.div
                   key={index}
-                  className={`w-6 h-6 rounded-sm achievement-square level-${Math.floor(Math.random() * 5)}`}
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  transition={{ delay: index * 0.01 }}
-                  whileHover={{ scale: 1.2 }}
-                  style={{
-                    background: `linear-gradient(45deg, rgba(0, 240, 255, ${Math.random() * 0.8}), rgba(255, 0, 111, ${Math.random() * 0.8}))`,
+                  className={`w-6 h-6 rounded-sm achievement-square`}
+                  initial={{ opacity: 0.3 }}
+                  animate={{
+                    opacity: activeSquares[index] ? 1 : 0.3,
+                    background: activeSquares[index]
+                      ? `linear-gradient(45deg, rgba(0, 240, 255, ${Math.random() * 0.8}), rgba(255, 0, 111, ${Math.random() * 0.8}))`
+                      : `linear-gradient(45deg, rgba(0, 240, 255, 0.1), rgba(255, 0, 111, 0.1))`,
                   }}
+                  transition={{
+                    duration: 0.3,
+                    ease: "easeOut",
+                  }}
+                  whileHover={{ scale: 1.2 }}
                 />
               ))}
             </div>
@@ -78,12 +119,6 @@ const styles = `
     transition: all 0.3s ease;
     cursor: pointer;
   }
-
-  .achievement-square.level-0 { background-color: #1e1e1e; }
-  .achievement-square.level-1 { background: linear-gradient(45deg, #00F0FF20, #FF006F20); }
-  .achievement-square.level-2 { background: linear-gradient(45deg, #00F0FF40, #FF006F40); }
-  .achievement-square.level-3 { background: linear-gradient(45deg, #00F0FF60, #FF006F60); }
-  .achievement-square.level-4 { background: linear-gradient(45deg, #00F0FF, #FF006F); }
 
   @keyframes fadeIn {
     from { opacity: 0; }

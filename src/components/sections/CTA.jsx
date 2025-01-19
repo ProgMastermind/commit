@@ -1,6 +1,8 @@
 import { motion } from "framer-motion";
+import { useNavigate } from "react-router-dom";
 
 const CTA = () => {
+  const navigate = useNavigate();
   const stats = [
     { value: "10K+", label: "Active Users" },
     { value: "50+", label: "Supported Games" },
@@ -40,6 +42,7 @@ const CTA = () => {
                 className="px-8 py-4 rounded-lg bg-gradient-to-r from-[#00F0FF] to-[#FF006F] text-white font-bold text-lg hover:shadow-[0_0_20px_0_rgba(0,240,255,0.5)] transition-all duration-300"
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
+                onClick={() => navigate("/dashboard")}
               >
                 Get Started Now
               </motion.button>

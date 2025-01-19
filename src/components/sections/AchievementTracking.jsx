@@ -46,8 +46,7 @@ const AchievementTracking = () => {
             </span>
           </h2>
           <p className="text-[#B4B4B4] text-lg max-w-2xl mx-auto">
-            Track your achievements across multiple games with our advanced
-            tracking system
+            Track your achievements across multiple games
           </p>
         </motion.div>
 

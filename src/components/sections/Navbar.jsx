@@ -1,9 +1,11 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
+import { useNavigate } from "react-router-dom";
 
 const Navbar = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
+  const navigate = useNavigate();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -17,6 +19,10 @@ const Navbar = () => {
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
+
+  const handleTryNowClick = () => {
+    navigate("/dashboard"); // This will navigate to the dashboard
+  };
 
   const navLinks = [
     { href: "#hero", label: "Home" },
@@ -137,6 +143,7 @@ const Navbar = () => {
               className="w-full mt-4 bg-gradient-to-r from-[#00F0FF] to-[#FF006F]
               text-white px-6 py-2 rounded-full hover:opacity-90 transition-all duration-300
               font-medium text-sm"
+              onClick={handleTryNowClick}
             >
               Try Now
             </motion.button>
