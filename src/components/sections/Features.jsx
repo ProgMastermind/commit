@@ -3,9 +3,9 @@ import { motion } from "framer-motion";
 const Features = () => {
   const features = [
     {
-      title: "Goal Setting & Tracking",
+      title: "Smart Goal Setting",
       description:
-        "Set daily gaming goals, track your progress, and visualize your journey to success.",
+        "Set SMART goals, break them into achievable milestones, and track your journey to success.",
       icon: (
         <svg
           className="w-6 h-6 text-white"
@@ -22,15 +22,15 @@ const Features = () => {
         </svg>
       ),
       bullets: [
-        "Daily Goals Dashboard",
-        "Progress Visualization",
-        "Intuitive Interface",
+        "Daily Progress Tracking",
+        "Milestone Management",
+        "Visual Goal Maps",
       ],
     },
     {
-      title: "Multi-Platform Tracking",
+      title: "Habit Streaks",
       description:
-        "Track achievements across multiple gaming platforms in one centralized dashboard.",
+        "Build lasting habits through consistent actions and maintain streaks for better accountability.",
       icon: (
         <svg
           className="w-6 h-6 text-white"
@@ -42,20 +42,16 @@ const Features = () => {
             strokeLinecap="round"
             strokeLinejoin="round"
             strokeWidth={2}
-            d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"
+            d="M13 10V3L4 14h7v7l9-11h-7z"
           />
         </svg>
       ),
-      bullets: [
-        "Cross-Platform Support",
-        "Real-time Updates",
-        "Game-specific Cards",
-      ],
+      bullets: ["Streak Analytics", "Habit Formation", "Progress Insights"],
     },
     {
-      title: "Social Features",
+      title: "Accountability Circles",
       description:
-        "Connect with friends, form teams, and compete in challenges together.",
+        "Connect with like-minded individuals, form accountability groups, and grow together.",
       icon: (
         <svg
           className="w-6 h-6 text-white"
@@ -71,7 +67,7 @@ const Features = () => {
           />
         </svg>
       ),
-      bullets: ["Private Circles", "Team Challenges", "Community Events"],
+      bullets: ["Goal Partners", "Group Challenges", "Community Support"],
     },
   ];
 
@@ -87,14 +83,14 @@ const Features = () => {
           transition={{ duration: 0.5 }}
         >
           <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
-            Supercharge Your{" "}
+            Empower Your{" "}
             <span className="bg-gradient-to-r from-[#00F0FF] to-[#FF006F] text-transparent bg-clip-text">
-              Gaming Experience
+              Personal Growth
             </span>
           </h2>
           <p className="text-[#B4B4B4] text-lg max-w-2xl mx-auto">
-            Track achievements, set goals, and connect with fellow gamers across
-            multiple platforms
+            Transform your goals into achievements with powerful tracking tools
+            and community support
           </p>
         </motion.div>
 

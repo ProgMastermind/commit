@@ -4,30 +4,29 @@ import { useState } from "react";
 const FAQ = () => {
   const faqs = [
     {
-      question: "How does the achievement tracking work?",
+      question: "How does CommiT's goal tracking system work?",
       answer:
-        "Our platform automatically syncs with your gaming accounts to track achievements across multiple platforms, visualizing your progress through our intuitive dashboard.",
+        "CommiT uses a simple yet powerful goal tracking system where you can set SMART goals, break them into milestones, and track daily progress. Our platform automatically syncs across devices and sends gentle reminders to keep you accountable.",
     },
     {
-      question: "What games are supported?",
+      question: "What are Accountability Circles?",
       answer:
-        "We support major titles including Free Fire, PUBG, League of Legends, and many more. Our list of supported games is continuously expanding.",
-    },
-    {
-      question: "How do Private Circles work?",
-      answer:
-        "Private Circles allow you to create groups of up to 10 members where you can set collaborative goals, track shared progress, and visualize group achievements together.",
+        "Accountability Circles are small groups of 5-10 members who share similar goals. You can set collaborative challenges, track shared progress, and support each other through daily check-ins and encouragement.",
     },
     {
       question: "How does the rewards system work?",
       answer:
-        "Complete achievements to earn coins, which can be redeemed for various rewards including movies, groceries, food, and more. Maintain achievement streaks to earn bonus rewards.",
+        "Complete your goals consistently to earn points. These points can be redeemed for various rewards including wellness products, learning resources, and exclusive experiences. Maintain streaks to earn bonus rewards.",
     },
     {
-      question:
-        "Can I track achievements across multiple games simultaneously?",
+      question: "Can I track multiple goals simultaneously?",
       answer:
-        "Yes! Our platform allows you to track achievements across multiple games simultaneously, providing a comprehensive view of your gaming progress in one place.",
+        "Yes! You can track multiple goals across different areas of your life - fitness, learning, personal development, and more. Our dashboard provides a comprehensive view of all your goals and progress.",
+    },
+    {
+      question: "How do you help maintain long-term motivation?",
+      answer:
+        "We combine proven psychology with gamification elements. Through streaks, milestone celebrations, community support, and tangible rewards, we help make goal achievement an engaging and sustainable journey.",
     },
   ];
 
@@ -48,10 +47,13 @@ const FAQ = () => {
           viewport={{ once: true }}
         >
           <h2 className="text-4xl font-bold mb-4 text-white">
-            Frequently Asked Questions
+            Common Questions About{" "}
+            <span className="bg-gradient-to-r from-[#00F0FF] to-[#FF006F] text-transparent bg-clip-text">
+              CommiT
+            </span>
           </h2>
           <p className="text-neutral-400">
-            Everything you need to know about Commit
+            Everything you need to know about achieving your goals with CommiT
           </p>
         </motion.div>
 

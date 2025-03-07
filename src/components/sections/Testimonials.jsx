@@ -3,25 +3,25 @@ import { motion } from "framer-motion";
 const Testimonials = () => {
   const testimonials = [
     {
-      name: "Mike Kennedy",
-      role: "Pro Gamer",
-      initials: "MK",
+      name: "Sarah Johnson",
+      role: "Fitness Enthusiast",
+      initials: "SJ",
       content:
-        "Finally, a platform that understands gamers! The achievement tracking is seamless, and the rewards system keeps me motivated to improve.",
+        "CommiT transformed my approach to fitness goals. The daily tracking and accountability circles kept me motivated, and I've maintained my workout streak for 6 months now!",
     },
     {
-      name: "Sarah Lee",
-      role: "Esports Player",
-      initials: "SL",
+      name: "Michael Chen",
+      role: "Learning & Development",
+      initials: "MC",
       content:
-        "The social features are incredible. Being able to track achievements with my team has taken our coordination to the next level.",
+        "The structured goal-setting and progress tracking helped me complete my certification while working full-time. The community support made all the difference.",
     },
     {
-      name: "Raj Kumar",
-      role: "Casual Gamer",
-      initials: "RJ",
+      name: "Emma Rodriguez",
+      role: "Personal Growth",
+      initials: "ER",
       content:
-        "The rewards marketplace makes achievement hunting so much more rewarding. I love being able to earn real rewards for my gaming accomplishments.",
+        "I love how CommiT gamifies personal development. The rewards system actually keeps me excited about achieving my daily goals. I've developed better habits in just 3 months.",
     },
   ];
 
@@ -51,13 +51,13 @@ const Testimonials = () => {
           viewport={{ once: true }}
         >
           <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
-            What Gamers{" "}
+            Success{" "}
             <span className="bg-gradient-to-r from-[#00F0FF] to-[#FF006F] text-transparent bg-clip-text">
-              Say About Us
+              Stories
             </span>
           </h2>
           <p className="text-[#B4B4B4] text-lg max-w-2xl mx-auto">
-            Join thousands of satisfied gamers tracking their achievements
+            Hear from people who transformed their goals into achievements
           </p>
         </motion.div>
 

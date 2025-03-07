@@ -1,11 +1,11 @@
 import { motion } from "framer-motion";
 
-const RewardsMarketplace = () => {
+const RewardsProgram = () => {
   const rewardCategories = [
     {
-      title: "Movies",
-      description: "Cinema tickets and streaming subscriptions",
-      minCoins: "500",
+      title: "Wellness Rewards",
+      description: "Gym memberships, wellness apps, and health products",
+      minPoints: "500",
       icon: (
         <svg
           className="w-6 h-6 text-white"
@@ -17,15 +17,15 @@ const RewardsMarketplace = () => {
             strokeLinecap="round"
             strokeLinejoin="round"
             strokeWidth="2"
-            d="M7 4v16M17 4v16M3 8h4m10 0h4M3 12h18M3 16h4m10 0h4M4 20h16a1 1 0 001-1V5a1 1 0 00-1-1H4a1 1 0 00-1 1v14a1 1 0 001 1z"
+            d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"
           />
         </svg>
       ),
     },
     {
-      title: "Groceries",
-      description: "Store vouchers and discount codes",
-      minCoins: "1000",
+      title: "Learning Credits",
+      description: "Online courses, books, and educational resources",
+      minPoints: "1000",
       icon: (
         <svg
           className="w-6 h-6 text-white"
@@ -37,15 +37,15 @@ const RewardsMarketplace = () => {
             strokeLinecap="round"
             strokeLinejoin="round"
             strokeWidth="2"
-            d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"
+            d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"
           />
         </svg>
       ),
     },
     {
-      title: "Food",
-      description: "Restaurant and delivery vouchers",
-      minCoins: "750",
+      title: "Productivity Tools",
+      description: "Premium apps and productivity subscriptions",
+      minPoints: "750",
       icon: (
         <svg
           className="w-6 h-6 text-white"
@@ -57,15 +57,15 @@ const RewardsMarketplace = () => {
             strokeLinecap="round"
             strokeLinejoin="round"
             strokeWidth="2"
-            d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+            d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
           />
         </svg>
       ),
     },
     {
-      title: "Other Rewards",
-      description: "Gaming accessories and merchandise",
-      minCoins: "1500",
+      title: "Experience Rewards",
+      description: "Exclusive events and memorable experiences",
+      minPoints: "1500",
       icon: (
         <svg
           className="w-6 h-6 text-white"
@@ -77,7 +77,7 @@ const RewardsMarketplace = () => {
             strokeLinecap="round"
             strokeLinejoin="round"
             strokeWidth="2"
-            d="M12 8v13m0-13V6a2 2 0 112 2h-2zm0 0V5.5A2.5 2.5 0 109.5 8H12zm-7 4h14M5 12a2 2 0 110-4h14a2 2 0 110 4M5 12v7a2 2 0 002 2h10a2 2 0 002-2v-7"
+            d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"
           />
         </svg>
       ),
@@ -85,7 +85,7 @@ const RewardsMarketplace = () => {
   ];
 
   return (
-    <section id="rewards-marketplace" className="py-20 bg-[#090909]">
+    <section id="rewards-program" className="py-20 bg-[#090909]">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Section Header */}
         <motion.div
@@ -95,18 +95,18 @@ const RewardsMarketplace = () => {
           viewport={{ once: true }}
         >
           <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
-            Rewards{" "}
+            Achievement{" "}
             <span className="bg-gradient-to-r from-[#FFD700] to-[#FFA500] text-transparent bg-clip-text">
-              Marketplace
+              Rewards Program
             </span>
           </h2>
           <p className="text-[#B4B4B4] text-lg max-w-2xl mx-auto">
-            Convert your achievements into real rewards across multiple
-            categories
+            Turn your consistent efforts into meaningful rewards that support
+            your growth journey
           </p>
         </motion.div>
 
-        {/* Rewards Balance */}
+        {/* Points Balance */}
         <motion.div
           className="mb-12 bg-[#111111] rounded-xl p-8 border border-neutral-800 max-w-3xl mx-auto"
           initial={{ opacity: 0, y: 20 }}
@@ -115,13 +115,15 @@ const RewardsMarketplace = () => {
         >
           <div className="flex items-center justify-between">
             <div>
-              <h3 className="text-[#E5E4E2] text-xl mb-2">Available Coins</h3>
+              <h3 className="text-[#E5E4E2] text-xl mb-2">Available Points</h3>
               <div className="text-4xl font-bold bg-gradient-to-r from-[#FFD700] to-[#FFA500] text-transparent bg-clip-text">
                 2,500
               </div>
             </div>
             <div className="text-right">
-              <h3 className="text-[#E5E4E2] text-xl mb-2">Current Streak</h3>
+              <h3 className="text-[#E5E4E2] text-xl mb-2">
+                Achievement Streak
+              </h3>
               <div className="text-4xl font-bold text-[#00F0FF]">15 Days</div>
             </div>
           </div>
@@ -146,7 +148,7 @@ const RewardsMarketplace = () => {
               </h3>
               <p className="text-[#B4B4B4] mb-4">{category.description}</p>
               <div className="text-[#FFD700] font-bold">
-                From {category.minCoins} coins
+                From {category.minPoints} points
               </div>
             </motion.div>
           ))}
@@ -172,4 +174,4 @@ const RewardsMarketplace = () => {
   );
 };
 
-export default RewardsMarketplace;
+export default RewardsProgram;

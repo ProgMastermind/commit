@@ -1,14 +1,14 @@
 import { motion } from "framer-motion";
 
-const SocialCommunity = () => {
+const AccountabilityCommunity = () => {
   const communityStats = [
-    { value: "50K+", label: "Active Members" },
-    { value: "1000+", label: "Private Circles" },
-    { value: "100+", label: "Daily Challenges" },
+    { value: "50K+", label: "Active Goal Setters" },
+    { value: "1000+", label: "Accountability Circles" },
+    { value: "100+", label: "Weekly Challenges" },
   ];
 
   return (
-    <section id="social-community" className="py-20 bg-neutral-900">
+    <section id="accountability-community" className="py-20 bg-neutral-900">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Section Header */}
         <motion.div
@@ -18,20 +18,20 @@ const SocialCommunity = () => {
           viewport={{ once: true }}
         >
           <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
-            Connect with{" "}
+            Join Thriving{" "}
             <span className="bg-gradient-to-r from-[#00F0FF] to-[#FF006F] text-transparent bg-clip-text">
-              Gaming Communities
+              Accountability Communities
             </span>
           </h2>
           <p className="text-[#B4B4B4] text-lg max-w-2xl mx-auto">
-            Join private circles or public communities to share achievements and
-            compete together
+            Connect with like-minded individuals, join accountability circles,
+            and achieve goals together
           </p>
         </motion.div>
 
         {/* Community Features */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-16">
-          {/* Private Circles */}
+          {/* Accountability Circles */}
           <motion.div
             className="bg-[#111111] rounded-xl p-8 border border-neutral-800 hover:border-[#00F0FF] transition-all duration-300"
             initial={{ opacity: 0, x: -50 }}
@@ -55,14 +55,15 @@ const SocialCommunity = () => {
                 </svg>
               </div>
               <h3 className="text-2xl font-bold text-white ml-4">
-                Private Circles
+                Accountability Circles
               </h3>
             </div>
             <div className="space-y-4">
               {[
-                "Up to 10 members per circle",
-                "Collaborative goal setting",
-                "Private achievement tracking",
+                "5-10 members per circle",
+                "Shared goal tracking",
+                "Daily check-ins and support",
+                "Personalized progress monitoring",
               ].map((feature, index) => (
                 <div key={index} className="flex items-center text-[#E5E4E2]">
                   <svg
@@ -78,7 +79,7 @@ const SocialCommunity = () => {
             </div>
           </motion.div>
 
-          {/* Public Communities */}
+          {/* Community Challenges */}
           <motion.div
             className="bg-[#111111] rounded-xl p-8 border border-neutral-800 hover:border-[#00F0FF] transition-all duration-300"
             initial={{ opacity: 0, x: 50 }}
@@ -97,19 +98,20 @@ const SocialCommunity = () => {
                     strokeLinecap="round"
                     strokeLinejoin="round"
                     strokeWidth="2"
-                    d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9"
+                    d="M13 10V3L4 14h7v7l9-11h-7z"
                   />
                 </svg>
               </div>
               <h3 className="text-2xl font-bold text-white ml-4">
-                Public Communities
+                Community Challenges
               </h3>
             </div>
             <div className="space-y-4">
               {[
-                "Open challenges and events",
-                "Global leaderboards",
-                "Community discussion forums",
+                "Weekly goal sprints",
+                "Themed monthly challenges",
+                "Achievement celebrations",
+                "Progress leaderboards",
               ].map((feature, index) => (
                 <div key={index} className="flex items-center text-[#E5E4E2]">
                   <svg
@@ -126,7 +128,7 @@ const SocialCommunity = () => {
           </motion.div>
         </div>
 
-        {/* Community Stats */}
+        {/* Community Impact Stats */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {communityStats.map((stat, index) => (
             <motion.div
@@ -149,4 +151,4 @@ const SocialCommunity = () => {
   );
 };
 
-export default SocialCommunity;
+export default AccountabilityCommunity;

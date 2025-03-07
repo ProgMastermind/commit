@@ -7,7 +7,6 @@ const Hero = () => {
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
 
   useEffect(() => {
-    // Animate squares in a sequential pattern
     const animateSquares = () => {
       setActiveSquares(new Array(49).fill(false));
       let currentIndex = 0;
@@ -23,7 +22,7 @@ const Hero = () => {
         } else {
           clearInterval(interval);
         }
-      }, 50); // Adjust timing as needed
+      }, 50);
 
       return () => clearInterval(interval);
     };
@@ -42,16 +41,16 @@ const Hero = () => {
           transition={{ duration: 0.5 }}
         >
           <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-6 leading-tight">
-            Level Up Your{" "}
+            Transform Your{" "}
             <span className="bg-gradient-to-r from-[#00F0FF] to-[#FF006F] text-transparent bg-clip-text">
-              Gaming Journey
+              Goals into Reality
             </span>{" "}
-            with Achievement Tracking
+            with Accountability
           </h1>
           <p className="text-[#B4B4B4] text-lg md:text-xl mb-8 max-w-2xl">
-            Track your gaming achievements across multiple platforms, set goals,
-            and earn rewards. Join a community of gamers who are committed to
-            excellence.
+            Turn your aspirations into achievements through gamified
+            goal-tracking, community support, and rewarding consistency. Join a
+            community of committed individuals who make every day count.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
             <motion.button
@@ -60,9 +59,8 @@ const Hero = () => {
               whileTap={{ scale: 0.95 }}
               onClick={() => setIsAuthModalOpen(true)}
             >
-              Try Now
+              Start Your Journey
             </motion.button>
-            {/* Add the AuthModal */}
             <AuthModal
               isOpen={isAuthModalOpen}
               onClose={() => setIsAuthModalOpen(false)}
@@ -73,24 +71,24 @@ const Hero = () => {
               whileHover={{ backgroundColor: "rgba(0, 240, 255, 0.1)" }}
               whileTap={{ scale: 0.95 }}
             >
-              See More
+              Learn More
             </motion.a>
           </div>
         </motion.div>
 
-        {/* Right Content - Achievement Graph */}
+        {/* Right Content - Goal Progress Visualization */}
         <motion.div
           className="lg:w-1/2"
           initial={{ opacity: 0, x: 50 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ duration: 0.5, delay: 0.2 }}
         >
-          <div className="contribution-graph bg-neutral-900/50 p-6 rounded-xl border border-neutral-800">
+          <div className="progress-visualization bg-neutral-900/50 p-6 rounded-xl border border-neutral-800">
             <div className="grid grid-cols-7 gap-2">
               {[...Array(49)].map((_, index) => (
                 <motion.div
                   key={index}
-                  className={`w-6 h-6 rounded-sm achievement-square`}
+                  className={`w-6 h-6 rounded-sm goal-square`}
                   initial={{ opacity: 0.3 }}
                   animate={{
                     opacity: activeSquares[index] ? 1 : 0.3,
@@ -112,34 +110,5 @@ const Hero = () => {
     </section>
   );
 };
-
-// Add these styles to your index.css or a separate styles file
-const styles = `
-  .achievement-square {
-    transition: all 0.3s ease;
-    cursor: pointer;
-  }
-
-  @keyframes fadeIn {
-    from { opacity: 0; }
-    to { opacity: 1; }
-  }
-
-  @keyframes slideIn {
-    from {
-      opacity: 0;
-      transform: translateY(20px);
-    }
-    to {
-      opacity: 1;
-      transform: translateY(0);
-    }
-  }
-`;
-
-// Add this to your document
-const styleSheet = document.createElement("style");
-styleSheet.innerText = styles;
-document.head.appendChild(styleSheet);
 
 export default Hero;

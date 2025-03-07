@@ -4,9 +4,9 @@ import { useNavigate } from "react-router-dom";
 const CTA = () => {
   const navigate = useNavigate();
   const stats = [
-    { value: "10K+", label: "Active Users" },
-    { value: "50+", label: "Supported Games" },
-    { value: "1M+", label: "Achievements Tracked" },
+    { value: "10K+", label: "Active Goal Achievers" },
+    { value: "50K+", label: "Goals Completed" },
+    { value: "85%", label: "Success Rate" },
   ];
 
   return (
@@ -25,15 +25,15 @@ const CTA = () => {
           <div className="flex flex-col md:flex-row items-center justify-between gap-8">
             <div className="text-center md:text-left">
               <h2 className="text-4xl md:text-5xl font-bold text-white mb-4">
-                Ready to Track Your{" "}
+                Ready to Transform Your{" "}
                 <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#00F0FF] to-[#FF006F]">
-                  Gaming Journey
+                  Goals into Reality
                 </span>
                 ?
               </h2>
-              <p className="text-neutral-400 text-lg mb-6">
-                Join thousands of gamers who are already tracking their
-                achievements and earning rewards.
+              <p className="text-neutral-400 text-lg mb-6 max-w-2xl">
+                Join thousands who are already achieving their goals and
+                building better habits with CommiTs proven system.
               </p>
             </div>
 
@@ -44,19 +44,19 @@ const CTA = () => {
                 whileTap={{ scale: 0.95 }}
                 onClick={() => navigate("/dashboard")}
               >
-                Get Started Now
+                Start Your Journey
               </motion.button>
               <motion.button
                 className="px-8 py-4 rounded-lg border-2 border-[#00F0FF] text-[#00F0FF] font-bold text-lg hover:bg-[#00F0FF]/10 transition-all duration-300"
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
               >
-                View Demo
+                Watch Demo
               </motion.button>
             </div>
           </div>
 
-          {/* Stats */}
+          {/* Success Stats */}
           <div className="mt-12 grid grid-cols-1 md:grid-cols-3 gap-6 text-center">
             {stats.map((stat, index) => (
               <motion.div

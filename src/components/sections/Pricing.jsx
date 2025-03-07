@@ -3,37 +3,44 @@ import { motion } from "framer-motion";
 const Pricing = () => {
   const plans = [
     {
-      name: "Free",
+      name: "Starter",
       price: "$0",
       description: "Perfect for getting started",
-      features: ["Basic Achievement Tracking", "3 Active Games", "Basic Stats"],
-      buttonText: "Get Started",
+      features: [
+        "Basic Goal Tracking",
+        "3 Active Goals",
+        "Basic Progress Stats",
+        "Community Access",
+      ],
+      buttonText: "Start Free",
       gradient: "from-[#00F0FF] to-[#FF006F]",
       popular: false,
     },
     {
-      name: "Pro",
+      name: "Pro Growth",
       price: "$9.99",
       description: "Monthly",
       features: [
-        "Advanced Achievement Tracking",
-        "Unlimited Games",
-        "Premium Rewards",
+        "Unlimited Goal Tracking",
+        "Advanced Analytics",
         "Priority Support",
+        "Premium Rewards",
+        "Accountability Circles",
       ],
-      buttonText: "Get Pro",
+      buttonText: "Go Pro",
       gradient: "from-[#FFD700] to-[#FFA500]",
       popular: true,
     },
     {
-      name: "Elite",
+      name: "Elite Achiever",
       price: "$19.99",
       description: "Monthly",
       features: [
         "Everything in Pro",
-        "Custom Achievement Badges",
+        "Personal Goal Coach",
+        "Custom Milestones",
         "API Access",
-        "24/7 VIP Support",
+        "VIP Community Access",
       ],
       buttonText: "Get Elite",
       gradient: "from-[#00F0FF] to-[#FF006F]",
@@ -54,12 +61,11 @@ const Pricing = () => {
           <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
             Choose Your{" "}
             <span className="bg-gradient-to-r from-[#00F0FF] to-[#FF006F] text-transparent bg-clip-text">
-              Gaming Journey
+              Growth Path
             </span>
           </h2>
           <p className="text-[#B4B4B4] text-lg max-w-2xl mx-auto">
-            Select the perfect plan to enhance your achievement tracking
-            experience
+            Select the perfect plan to support your goal achievement journey
           </p>
         </motion.div>
 

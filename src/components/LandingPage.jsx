@@ -1,11 +1,11 @@
 import Navbar from "./sections/Navbar";
 import Hero from "./sections/Hero";
 import Features from "./sections/Features";
-import AchievementTracking from "./sections/AchievementTracking";
-import SocialCommunity from "./sections/SocialCommunity";
-import RewardsMarketplace from "./sections/RewardsMarketplace";
-import Leaderboard from "./sections/Leaderboard";
-import UserDashboard from "./sections/UserDashboard";
+import GoalTracking from "./sections/GoalTracking";
+import AccountabilityCommunity from "./sections/AccountabilityCommunity";
+import RewardsProgram from "./sections/RewardsProgram";
+import GoalChampions from "./sections/GoalChampions";
+import ProgressHub from "./sections/ProgressHub";
 import Testimonials from "./sections/Testimonials";
 import Pricing from "./sections/Pricing";
 import FAQ from "./sections/FAQ";
@@ -19,11 +19,11 @@ const LandingPage = () => {
       <main className="pt-16">
         <Hero />
         <Features />
-        <AchievementTracking />
-        <SocialCommunity />
-        <RewardsMarketplace />
-        <Leaderboard />
-        <UserDashboard />
+        <GoalTracking />
+        <AccountabilityCommunity />
+        <RewardsProgram />
+        <GoalChampions />
+        <ProgressHub />
         <Testimonials />
         <Pricing />
         <FAQ />
