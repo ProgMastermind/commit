@@ -21,7 +21,7 @@ const Groups = () => {
     if (groups.length > 0) {
       filterGroups();
     }
-  });
+  }, [groups, activeTab, searchQuery]);
 
   const fetchGroups = async () => {
     try {
@@ -38,8 +38,10 @@ const Groups = () => {
       }
 
       const data = await response.json();
+      console.log("Fetched groups:", data.data);
       setGroups(data.data || []);
     } catch (err) {
+      console.error("Error fetching groups:", err);
       setError(err.message);
     } finally {
       setIsLoading(false);
@@ -71,16 +73,32 @@ const Groups = () => {
   };
 
   const handleGroupCreated = (newGroup) => {
+    console.log("New group created:", newGroup);
+    // Add the new group to the state with isMember flag
     setGroups((prevGroups) => [...prevGroups, { ...newGroup, isMember: true }]);
+    // Close the modal
     setIsCreateModalOpen(false);
+    // Show a success message or notification here if needed
   };
 
   const handleGroupJoined = (joinedGroup) => {
-    setGroups((prevGroups) =>
-      prevGroups.map((group) =>
-        group._id === joinedGroup._id ? { ...group, isMember: true } : group,
-      ),
-    );
+    console.log("Joined group:", joinedGroup);
+    // Update the groups state to reflect the joined group
+    setGroups((prevGroups) => {
+      // Check if the group already exists in the state
+      const groupExists = prevGroups.some(group => group._id === joinedGroup._id);
+      
+      if (groupExists) {
+        // Update the existing group
+        return prevGroups.map((group) =>
+          group._id === joinedGroup._id ? { ...group, isMember: true } : group
+        );
+      } else {
+        // Add the new group to the state
+        return [...prevGroups, { ...joinedGroup, isMember: true }];
+      }
+    });
+    
     setIsJoinModalOpen(false);
   };
 
@@ -484,134 +502,103 @@ const Groups = () => {
           {filteredGroups.length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {filteredGroups.map((group) => (
-                <motion.div
+                <div
                   key={group._id}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className="bg-neutral-900/40 backdrop-blur-sm rounded-xl border border-neutral-800/50
-                    hover:border-[#00F0FF]/50 transition-all duration-300 overflow-hidden group"
+                  className="bg-neutral-800/50 rounded-xl p-6 border border-neutral-700/50 hover:border-[#00F0FF]/50 transition-all"
                 >
-                  {/* Group Header with Category Banner */}
-                  <div className="h-24 bg-gradient-to-r from-[#00F0FF]/20 to-[#FF006F]/20 relative flex items-end">
-                    {/* Category Icon */}
-                    <div
-                      className="absolute top-4 right-4 w-10 h-10 rounded-full bg-neutral-900/80
-                      backdrop-blur-sm flex items-center justify-center text-xl"
-                    >
-                      {getCategoryIcon(group.category)}
-                    </div>
-
-                    {/* Group Info */}
-                    <div className="p-4 w-full bg-neutral-900/50 backdrop-blur-sm">
-                      <h3 className="font-semibold text-white text-lg group-hover:text-[#00F0FF] transition-colors duration-300">
-                        {group.name}
-                      </h3>
-                    </div>
-                  </div>
-
-                  {/* Group Body */}
-                  <div className="p-6">
-                    {/* Description */}
-                    <p className="text-neutral-400 text-sm mb-4 line-clamp-2">
-                      {group.description || "No description provided."}
-                    </p>
-
-                    {/* Group Stats */}
-                    <div className="grid grid-cols-3 gap-2 mb-4">
-                      <div className="bg-neutral-800/40 rounded-lg p-2 text-center">
-                        <p className="text-xs text-neutral-500">Members</p>
-                        <p className="text-lg font-bold text-white">
-                          {group.members?.length || 0}
-                        </p>
+                  {/* Group Header */}
+                  <div className="flex justify-between items-start mb-4">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#00F0FF] to-[#FF006F] flex items-center justify-center text-xl">
+                        {getCategoryIcon(group.category)}
                       </div>
-                      <div className="bg-neutral-800/40 rounded-lg p-2 text-center">
-                        <p className="text-xs text-neutral-500">Goals</p>
-                        <p className="text-lg font-bold text-white">
-                          {group.activeGoals || 0}
-                        </p>
-                      </div>
-                      <div className="bg-neutral-800/40 rounded-lg p-2 text-center">
-                        <p className="text-xs text-neutral-500">Success</p>
-                        <p className="text-lg font-bold text-[#00F0FF]">
-                          {group.successRate || 0}%
+                      <div>
+                        <h3 className="text-xl font-bold text-white">
+                          {group.name}
+                        </h3>
+                        <p className="text-sm text-neutral-400">
+                          {group.members?.length || 0} members
                         </p>
                       </div>
                     </div>
-
-                    {/* Group Activity */}
-                    {group.isMember && group.recentActivity && (
-                      <div className="mb-4 bg-neutral-800/30 rounded-lg p-3">
-                        <p className="text-xs text-neutral-500 mb-1">
-                          Recent Activity
-                        </p>
-                        <p className="text-sm text-white">
-                          {group.recentActivity}
-                        </p>
-                      </div>
+                    {group.privacy === "private" && (
+                      <span className="px-2 py-1 bg-neutral-700/50 rounded-full text-xs text-neutral-300">
+                        Private
+                      </span>
                     )}
+                  </div>
 
-                    {/* Action Buttons */}
-                    <div className="flex gap-2">
-                      {group.isMember ? (
-                        <button
-                          className="flex-1 px-3 py-2 bg-neutral-800/80 rounded-lg text-white
-                          hover:bg-neutral-700/80 transition-colors flex items-center justify-center gap-2"
-                        >
-                          <svg
-                            className="w-4 h-4"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth={2}
-                              d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
-                            />
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth={2}
-                              d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
-                            />
-                          </svg>
-                          View Details
-                        </button>
-                      ) : (
-                        <button
-                          className="flex-1 px-3 py-2 bg-gradient-to-r from-[#00F0FF] to-[#FF006F]
-                          rounded-lg text-white transition-all flex items-center justify-center gap-2
-                          hover:shadow-lg hover:shadow-[#00F0FF]/20"
-                        >
-                          <svg
-                            className="w-4 h-4"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth={2}
-                              d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"
-                            />
-                          </svg>
-                          Join Group
-                        </button>
-                      )}
+                  {/* Description */}
+                  {group.description && (
+                    <p className="text-neutral-300 mb-4 line-clamp-2">
+                      {group.description}
+                    </p>
+                  )}
+
+                  {/* Invite Code (if member) */}
+                  {group.isMember && group.inviteCode && (
+                    <div className="mb-4 p-2 bg-neutral-700/30 rounded-lg">
+                      <div className="flex justify-between items-center">
+                        <span className="text-xs text-neutral-400">
+                          Invite Code:
+                        </span>
+                        <span className="text-xs font-mono font-semibold text-[#00F0FF]">
+                          {group.inviteCode}
+                        </span>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Stats */}
+                  <div className="grid grid-cols-2 gap-3 mb-4">
+                    <div className="bg-neutral-700/30 rounded-lg p-3">
+                      <p className="text-xs text-neutral-400 mb-1">
+                        Active Goals
+                      </p>
+                      <p className="text-lg font-bold text-[#00F0FF]">
+                        {group.activeGoals || 0}
+                      </p>
+                    </div>
+                    <div className="bg-neutral-700/30 rounded-lg p-3">
+                      <p className="text-xs text-neutral-400 mb-1">
+                        Completion
+                      </p>
+                      <p className="text-lg font-bold text-[#FFD700]">
+                        {group.completionRate || 0}%
+                      </p>
                     </div>
                   </div>
-                </motion.div>
+
+                  {/* Action Button */}
+                  {group.isMember ? (
+                    <button
+                      onClick={() => {
+                        // Navigate to group detail page or open group detail modal
+                        console.log("View group details:", group._id);
+                      }}
+                      className="w-full py-2 rounded-lg bg-neutral-700/50 hover:bg-neutral-600/50
+                        text-white font-medium transition-colors"
+                    >
+                      View Details
+                    </button>
+                  ) : (
+                    <button
+                      onClick={() => {
+                        // Join the group
+                        console.log("Join group:", group._id);
+                      }}
+                      className="w-full py-2 rounded-lg bg-gradient-to-r from-[#00F0FF] to-[#FF006F]
+                        text-white font-medium hover:opacity-90 transition-all"
+                    >
+                      Join Group
+                    </button>
+                  )}
+                </div>
               ))}
             </div>
           ) : (
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="text-center py-16 bg-neutral-900/30 rounded-xl border border-neutral-800/50"
-            >
-              <div className="w-20 h-20 mx-auto bg-neutral-800/50 rounded-full flex items-center justify-center mb-4">
+            <div className="col-span-full flex flex-col items-center justify-center py-12 text-center">
+              <div className="w-20 h-20 rounded-full bg-neutral-800/50 flex items-center justify-center mb-4">
                 <svg
                   className="w-10 h-10 text-neutral-500"
                   fill="none"
@@ -626,63 +613,35 @@ const Groups = () => {
                   />
                 </svg>
               </div>
-              <h3 className="text-xl font-medium text-white mb-2">
-                No groups found
+              <h3 className="text-xl font-bold text-white mb-2">
+                {activeTab === "myGroups"
+                  ? "You haven't joined any groups yet"
+                  : "No groups found"}
               </h3>
-              <p className="text-neutral-400 max-w-md mx-auto mb-6">
-                {searchQuery
-                  ? `No groups matching "${searchQuery}" found. Try a different search term.`
-                  : activeTab === "myGroups"
-                    ? "You haven't joined any groups yet. Create a new group or discover existing ones!"
-                    : "No groups available for discovery at the moment. Check back later or create your own!"}
+              <p className="text-neutral-400 mb-6 max-w-md">
+                {activeTab === "myGroups"
+                  ? "Create a new group or join an existing one to get started"
+                  : "Try adjusting your search or create your own group"}
               </p>
-              <div className="flex justify-center gap-4">
-                {activeTab === "myGroups" && (
+              {activeTab === "myGroups" && (
+                <div className="flex gap-4">
                   <button
-                    onClick={() => setActiveTab("discover")}
-                    className="px-6 py-3 bg-neutral-800/80 hover:bg-neutral-700/80
-                      rounded-xl text-white font-medium transition-all duration-300
-                      flex items-center gap-2"
+                    onClick={() => setIsJoinModalOpen(true)}
+                    className="px-5 py-2.5 bg-neutral-800 hover:bg-neutral-700
+                      rounded-lg text-white transition-colors"
                   >
-                    <svg
-                      className="w-5 h-5"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-                      />
-                    </svg>
-                    Discover Groups
+                    Join Group
                   </button>
-                )}
-                <button
-                  onClick={() => setIsCreateModalOpen(true)}
-                  className="px-6 py-3 bg-gradient-to-r from-[#00F0FF] to-[#FF006F]
-                                      rounded-xl text-white font-medium hover:opacity-90 transition-all duration-300
-                                      flex items-center gap-2"
-                >
-                  <svg
-                    className="w-5 h-5"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
+                  <button
+                    onClick={() => setIsCreateModalOpen(true)}
+                    className="px-5 py-2.5 bg-gradient-to-r from-[#00F0FF] to-[#FF006F]
+                      rounded-lg text-white font-medium hover:opacity-90 transition-all"
                   >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M12 6v6m0 0v6m0-6h6m-6 0H6"
-                    />
-                  </svg>
-                  Create New Group
-                </button>
-              </div>
-            </motion.div>
+                    Create Group
+                  </button>
+                </div>
+              )}
+            </div>
           )}
         </>
       )}

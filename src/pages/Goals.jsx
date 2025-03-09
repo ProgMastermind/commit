@@ -62,19 +62,39 @@ const Goals = () => {
         },
       );
 
+      // Get the response data even if the request failed
+      const data = await response.json();
+      
       if (!response.ok) {
-        throw new Error("Failed to complete goal");
+        // Use the error message from the server if available
+        throw new Error(data.message || "Failed to complete goal");
       }
+
+      const updatedGoal = data.data;
 
       // Update local state
       setGoals((prevGoals) =>
-        prevGoals.map((goal) =>
-          goal._id === goalId ? { ...goal, status: "completed" } : goal,
-        ),
+        prevGoals.map((goal) => {
+          if (goal._id === goalId) {
+            if (goal.isGroupGoal) {
+              // For group goals, update the completion percentage and user completion status
+              return {
+                ...goal,
+                completionPercentage: updatedGoal.completionPercentage,
+                userCompleted: true,
+                status: updatedGoal.status // This might be 'active' if not all members completed
+              };
+            } else {
+              // For personal goals, simply mark as completed
+              return { ...goal, status: 'completed' };
+            }
+          }
+          return goal;
+        }),
       );
     } catch (err) {
       console.error("Error completing goal:", err);
-      setError("Failed to mark goal as complete");
+      setError(err.message || "Failed to mark goal as complete");
     } finally {
       setIsCompletingGoal(null);
     }
@@ -93,8 +113,14 @@ const Goals = () => {
     const filtered = goals.filter((goal) => {
       const matchesType =
         activeTab === "personal" ? !goal.isGroupGoal : goal.isGroupGoal;
-      const matchesStatus =
-        filter === "all" || goal.status.toLowerCase() === filter;
+      
+      // For group goals, check user's completion status instead of goal status
+      const matchesStatus = 
+        filter === "all" || 
+        (goal.isGroupGoal 
+          ? (filter === "completed" ? goal.userCompleted : !goal.userCompleted)
+          : goal.status.toLowerCase() === filter);
+          
       const matchesSearch =
         !searchQuery ||
         goal.goalName.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -116,6 +142,16 @@ const Goals = () => {
         return (a.category || "").localeCompare(b.category || "");
       }
       if (sortBy === "status") {
+        if (a.isGroupGoal && b.isGroupGoal) {
+          // For group goals, sort by user completion status
+          return (a.userCompleted ? "completed" : "active").localeCompare(
+            b.userCompleted ? "completed" : "active"
+          );
+        } else if (a.isGroupGoal) {
+          return (a.userCompleted ? "completed" : "active").localeCompare(b.status);
+        } else if (b.isGroupGoal) {
+          return a.status.localeCompare(b.userCompleted ? "completed" : "active");
+        }
         return a.status.localeCompare(b.status);
       }
       return 0;
@@ -125,8 +161,12 @@ const Goals = () => {
   const sortedAndFilteredGoals = getSortedAndFilteredGoals();
 
   const handleGoalCreated = (newGoal) => {
-    setGoals((prevGoals) => [...prevGoals, newGoal]);
+    console.log("New goal created:", newGoal);
+    // Add the new goal to the state
+    setGoals((prevGoals) => [newGoal, ...prevGoals]);
+    // Close the modal
     setIsCreateModalOpen(false);
+    // Show a success message or notification here if needed
   };
 
   // Get category icon
@@ -499,7 +539,7 @@ const Goals = () => {
                   strokeLinecap="round"
                   strokeLinejoin="round"
                   strokeWidth={2}
-                  d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                  d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
                 />
               </svg>
             </div>
@@ -521,237 +561,225 @@ const Goals = () => {
 
       {/* Goals Grid */}
       {!isLoading && !error && (
-        <>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
           {sortedAndFilteredGoals.length > 0 ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {sortedAndFilteredGoals.map((goal) => {
-                const daysLeft = getDaysLeft(goal.deadline);
-                const isCompleting = isCompletingGoal === goal._id;
+            sortedAndFilteredGoals.map((goal) => (
+              <motion.div
+                key={goal._id}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.3 }}
+                className={`relative bg-gradient-to-b from-neutral-800/80 to-neutral-900/90 backdrop-blur-sm border ${
+                  goal.isGroupGoal && goal.userCompleted
+                    ? "border-green-500/30"
+                    : goal.isGroupGoal
+                    ? "border-blue-500/30"
+                    : goal.status === "completed"
+                    ? "border-green-500/30"
+                    : "border-neutral-700/50"
+                } rounded-xl overflow-hidden group hover:shadow-lg hover:shadow-neutral-900/50 transition-all duration-300`}
+              >
+                {/* Category badge */}
+                <div className="absolute top-4 left-4 bg-neutral-800/80 backdrop-blur-sm border border-neutral-700/50 rounded-lg px-2 py-1 text-xs font-medium text-neutral-300 flex items-center gap-1">
+                  <span>{getCategoryIcon(goal.category)}</span>
+                  <span className="capitalize">{goal.category}</span>
+                </div>
 
-                return (
-                  <motion.div
-                    key={goal._id}
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className="bg-neutral-900/40 backdrop-blur-sm rounded-xl p-6 border border-neutral-800/50
-                      hover:border-[#00F0FF]/50 transition-all duration-300 group"
+                {/* Group badge for group goals */}
+                {goal.isGroupGoal && (
+                  <div className="absolute top-4 right-4 bg-blue-500/20 backdrop-blur-sm border border-blue-500/30 rounded-lg px-2 py-1 text-xs font-medium text-blue-300 flex items-center gap-1">
+                    <svg
+                      className="w-3 h-3"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"
+                      />
+                    </svg>
+                    <span>Group</span>
+                  </div>
+                )}
+
+                <div className="p-5">
+                  <h3 className="text-lg font-medium text-white mt-8 mb-2 pr-20 line-clamp-2">
+                    {goal.goalName}
+                  </h3>
+
+                  {goal.description && (
+                    <p className="text-neutral-400 text-sm mb-4 line-clamp-2">
+                      {goal.description}
+                    </p>
+                  )}
+
+                  {/* Difficulty badge */}
+                  <div
+                    className={`inline-flex items-center gap-1 px-2 py-1 rounded-md text-xs font-medium mb-4 ${
+                      goal.difficulty === "easy"
+                        ? "bg-green-500/20 text-green-300"
+                        : goal.difficulty === "medium"
+                        ? "bg-yellow-500/20 text-yellow-300"
+                        : "bg-red-500/20 text-red-300"
+                    }`}
                   >
-                    <div className="flex justify-between items-start mb-4">
-                      <div className="flex items-start gap-3">
+                    {goal.difficulty === "easy" ? (
+                      <span>⭐ Easy</span>
+                    ) : goal.difficulty === "medium" ? (
+                      <span>⭐⭐ Medium</span>
+                    ) : (
+                      <span>⭐⭐⭐ Hard</span>
+                    )}
+                  </div>
+
+                  {/* Group goal completion status */}
+                  {goal.isGroupGoal && (
+                    <div className="mb-4">
+                      <div className="flex justify-between text-xs text-neutral-400 mb-1">
+                        <span>Group Completion</span>
+                        <span>{goal.completionPercentage}%</span>
+                      </div>
+                      <div className="w-full h-2 bg-neutral-800 rounded-full overflow-hidden">
                         <div
-                          className="mt-1 w-10 h-10 rounded-xl bg-gradient-to-r from-[#00F0FF]/10 to-[#FF006F]/10
-                          border border-[#00F0FF]/20 flex items-center justify-center text-xl group-hover:scale-110
-                          transition-transform duration-300"
-                        >
-                          {getCategoryIcon(goal.category)}
-                        </div>
-                        <div>
-                          <h3 className="font-semibold text-white group-hover:text-[#00F0FF] transition-colors duration-300">
-                            {goal.goalName}
-                          </h3>
-                          <p className="text-sm text-neutral-400 capitalize">
-                            {goal.category || "General"}
-                            {goal.isGroupGoal && " • Group Goal"}
-                          </p>
-                        </div>
+                          className="h-full bg-gradient-to-r from-[#00F0FF] to-[#FF006F] rounded-full"
+                          style={{ width: `${goal.completionPercentage}%` }}
+                        ></div>
                       </div>
-                      <span
-                        className={`text-xs px-2.5 py-1 rounded-full font-medium
-                          ${
-                            goal.status === "completed"
-                              ? "bg-green-500/10 text-green-400"
-                              : daysLeft <= 2
-                                ? "bg-red-500/20 text-red-400"
-                                : daysLeft <= 5
-                                  ? "bg-amber-500/20 text-amber-400"
-                                  : "bg-blue-500/20 text-blue-400"
-                          }`}
-                      >
-                        {goal.status === "completed"
-                          ? "Completed"
-                          : `${daysLeft} days left`}
-                      </span>
-                    </div>
-
-                    {/* Target Display */}
-                    {goal.targetValue && goal.targetUnit && (
-                      <div className="mt-3 mb-4 bg-neutral-800/30 rounded-lg p-3 flex justify-between items-center">
-                        <span className="text-sm text-neutral-400">
-                          Target:
-                        </span>
-                        <span className="text-white font-medium">
-                          {goal.targetValue} {goal.targetUnit} {goal.frequency}
-                        </span>
-                      </div>
-                    )}
-
-                    {/* Progress bar for active goals */}
-                    {goal.status !== "completed" && (
-                      <div className="mb-4">
-                        <div className="flex justify-between text-xs mb-1">
-                          <span className="text-neutral-400">Progress</span>
-                          <span className="text-white">
-                            {goal.progress || 0}%
-                          </span>
-                        </div>
-                        <div className="h-2 bg-neutral-800/70 rounded-full overflow-hidden">
-                          <motion.div
-                            initial={{ width: 0 }}
-                            animate={{ width: `${goal.progress || 0}%` }}
-                            transition={{ duration: 1 }}
-                            style={{
-                              background: `linear-gradient(to right, #00F0FF, ${
-                                (goal.progress || 0) > 60
-                                  ? "#FF006F"
-                                  : "#00F0FF"
-                              })`,
-                            }}
-                            className="h-full rounded-full"
-                          />
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Action buttons */}
-                    <div className="flex justify-between items-center">
-                      <div>
-                        <p className="text-xs text-neutral-500">
-                          Due: {new Date(goal.deadline).toLocaleDateString()}
-                        </p>
-                      </div>
-
-                      <div className="flex gap-2">
-                        {goal.status !== "completed" && (
-                          <motion.button
-                            whileHover={{ scale: 1.05 }}
-                            whileTap={{ scale: 0.95 }}
-                            className="text-sm px-3 py-1.5 rounded-lg bg-gradient-to-r from-[#00F0FF] to-[#FF006F]
-                              text-white hover:shadow-lg hover:shadow-[#00F0FF]/20 transition-all duration-300
-                              flex items-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed"
-                            onClick={() => handleMarkAsComplete(goal._id)}
-                            disabled={isCompleting === goal._id}
-                          >
-                            {isCompleting === goal._id ? (
-                              <>
-                                <svg
-                                  className="animate-spin h-4 w-4"
-                                  xmlns="http://www.w3.org/2000/svg"
-                                  fill="none"
-                                  viewBox="0 0 24 24"
-                                >
-                                  <circle
-                                    className="opacity-25"
-                                    cx="12"
-                                    cy="12"
-                                    r="10"
-                                    stroke="currentColor"
-                                    strokeWidth="4"
-                                  ></circle>
-                                  <path
-                                    className="opacity-75"
-                                    fill="currentColor"
-                                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                                  ></path>
-                                </svg>
-                              </>
-                            ) : (
-                              <>
-                                <svg
-                                  className="w-4 h-4"
-                                  fill="none"
-                                  stroke="currentColor"
-                                  viewBox="0 0 24 24"
-                                >
-                                  <path
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                    strokeWidth={2}
-                                    d="M5 13l4 4L19 7"
-                                  />
-                                </svg>
-                                Complete
-                              </>
-                            )}
-                          </motion.button>
+                      <div className="mt-1 text-xs text-neutral-500">
+                        {goal.userCompleted ? (
+                          <span className="text-green-400">✓ You've completed this goal</span>
+                        ) : (
+                          <span>You haven't completed this goal yet</span>
                         )}
-
-                        <button
-                          className="text-sm p-1.5 rounded-lg bg-neutral-800/70 hover:bg-neutral-700/70
-                          text-neutral-400 hover:text-white transition-all duration-300"
-                        >
-                          <svg
-                            className="w-4 h-4"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth={2}
-                              d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z"
-                            />
-                          </svg>
-                        </button>
                       </div>
                     </div>
-                  </motion.div>
-                );
-              })}
-            </div>
+                  )}
+
+                  {/* Deadline */}
+                  <div className="flex justify-between items-center mt-4">
+                    <div className="text-sm">
+                      <span className="text-neutral-500">Deadline:</span>{" "}
+                      <span
+                        className={`${
+                          getDaysLeft(goal.deadline) < 0
+                            ? "text-red-400"
+                            : getDaysLeft(goal.deadline) < 3
+                            ? "text-yellow-400"
+                            : "text-neutral-300"
+                        }`}
+                      >
+                        {new Date(goal.deadline).toLocaleDateString()}
+                      </span>
+                      {getDaysLeft(goal.deadline) >= 0 && (
+                        <span className="text-neutral-500 ml-1">
+                          ({getDaysLeft(goal.deadline)} days left)
+                        </span>
+                      )}
+                    </div>
+
+                    {/* Complete button for active goals */}
+                    {((!goal.isGroupGoal && goal.status === "active") ||
+                      (goal.isGroupGoal && !goal.userCompleted)) && (
+                      <button
+                        onClick={() => handleMarkAsComplete(goal._id)}
+                        disabled={isCompletingGoal === goal._id}
+                        className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-all duration-300 ${
+                          isCompletingGoal === goal._id
+                            ? "bg-neutral-700/50 text-neutral-400 cursor-not-allowed"
+                            : "bg-gradient-to-r from-[#00F0FF] to-[#FF006F] text-white hover:shadow-lg hover:shadow-[#FF006F]/20"
+                        }`}
+                      >
+                        {isCompletingGoal === goal._id ? (
+                          <span className="flex items-center gap-1">
+                            <svg
+                              className="animate-spin h-4 w-4"
+                              xmlns="http://www.w3.org/2000/svg"
+                              fill="none"
+                              viewBox="0 0 24 24"
+                            >
+                              <circle
+                                className="opacity-25"
+                                cx="12"
+                                cy="12"
+                                r="10"
+                                stroke="currentColor"
+                                strokeWidth="4"
+                              ></circle>
+                              <path
+                                className="opacity-75"
+                                fill="currentColor"
+                                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                              ></path>
+                            </svg>
+                            Processing...
+                          </span>
+                        ) : (
+                          "Complete"
+                        )}
+                      </button>
+                    )}
+
+                    {/* Completed status */}
+                    {((!goal.isGroupGoal && goal.status === "completed") ||
+                      (goal.isGroupGoal && goal.userCompleted)) && (
+                      <span className="inline-flex items-center gap-1 px-3 py-1.5 bg-green-500/20 text-green-300 rounded-lg text-sm font-medium">
+                        <svg
+                          className="w-4 h-4"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M5 13l4 4L19 7"
+                          />
+                        </svg>
+                        Completed
+                      </span>
+                    )}
+
+                    {/* Failed status */}
+                    {!goal.isGroupGoal && goal.status === "failed" && (
+                      <span className="inline-flex items-center gap-1 px-3 py-1.5 bg-red-500/20 text-red-300 rounded-lg text-sm font-medium">
+                        <svg
+                          className="w-4 h-4"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M6 18L18 6M6 6l12 12"
+                          />
+                        </svg>
+                        Failed
+                      </span>
+                    )}
+                  </div>
+                </div>
+              </motion.div>
+            ))
           ) : (
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="text-center py-16 bg-neutral-900/30 rounded-xl border border-neutral-800/50"
-            >
-              <div className="w-20 h-20 mx-auto bg-neutral-800/50 rounded-full flex items-center justify-center mb-4">
-                <svg
-                  className="w-10 h-10 text-neutral-500"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
-                  />
-                </svg>
-              </div>
-              <h3 className="text-xl font-medium text-white mb-2">
+            <div className="col-span-full flex flex-col items-center justify-center py-10 text-center">
+              <div className="text-5xl mb-4">🎯</div>
+              <h3 className="text-xl font-medium text-neutral-300 mb-2">
                 No goals found
               </h3>
-              <p className="text-neutral-400 max-w-md mx-auto mb-6">
-                {searchQuery
-                  ? `No goals matching "${searchQuery}" found. Try a different search term or clear the filter.`
-                  : `You don't have any ${filter !== "all" ? filter : ""} ${activeTab} goals yet. Create your first goal to get started on your journey!`}
+              <p className="text-neutral-500 max-w-md">
+                {activeTab === "personal"
+                  ? "You don't have any personal goals that match your filters. Try creating a new goal!"
+                  : "You don't have any group goals that match your filters. Join a group or create a group goal!"}
               </p>
-              <button
-                onClick={() => setIsCreateModalOpen(true)}
-                className="px-6 py-3 bg-gradient-to-r from-[#00F0FF] to-[#FF006F]
-                                          rounded-xl text-white font-medium hover:opacity-90 transition-all duration-300
-                                          mx-auto flex items-center gap-2"
-              >
-                <svg
-                  className="w-5 h-5"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M12 6v6m0 0v6m0-6h6m-6 0H6"
-                  />
-                </svg>
-                Create New Goal
-              </button>
-            </motion.div>
+            </div>
           )}
-        </>
+        </div>
       )}
 
       {/* Create Goal Modal */}
