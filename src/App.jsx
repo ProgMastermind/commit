@@ -11,13 +11,15 @@ import Goals from "./pages/Goals";
 import Profile from "./pages/Profile";
 import Groups from "./pages/Groups";
 import Achievements from "./pages/Achievements";
+import ResetPassword from "./components/auth/ResetPassword";
 
 function App() {
   return (
     <Router>
       <Routes>
-        {/* Public Route */}
+        {/* Public Routes */}
         <Route path="/" element={<LandingPage />} />
+        <Route path="/reset-password/:token" element={<ResetPassword />} />
 
         {/* Protected Routes with DashboardLayout */}
         <Route element={<DashboardLayout />}>

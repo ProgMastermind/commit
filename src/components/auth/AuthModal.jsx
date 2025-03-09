@@ -4,11 +4,19 @@ import PropTypes from "prop-types";
 import { useNavigate } from "react-router-dom";
 import Login from "./Login";
 import Signup from "./Signup";
+import ForgotPassword from "./ForgotPassword";
 
 const AuthModal = ({ isOpen, onClose }) => {
   const [isLogin, setIsLogin] = useState(true);
   const [error, setError] = useState("");
+  const [isForgotPassword, setIsForgotPassword] = useState(false);
   const navigate = useNavigate();
+
+  const resetView = () => {
+    setIsLogin(true);
+    setIsForgotPassword(false);
+    setError("");
+  };
 
   return (
     <AnimatePresence>
@@ -32,58 +40,60 @@ const AuthModal = ({ isOpen, onClose }) => {
             className="fixed inset-0 z-50 flex items-center justify-center p-4"
           >
             <div className="w-full max-w-md overflow-hidden rounded-2xl bg-gradient-to-b from-neutral-800/80 to-neutral-900/90 backdrop-blur-xl border border-neutral-700/50 shadow-[0_20px_60px_-10px_rgba(0,0,0,0.5)]">
-              {/* Header with Tabs */}
-              <div className="relative">
-                {/* Glowing accent decoration */}
-                <div className="absolute -top-28 left-1/2 -translate-x-1/2 w-40 h-40 bg-gradient-to-br from-[#00F0FF]/30 to-[#FF006F]/30 rounded-full blur-3xl" />
+              {/* Header with Tabs - Only show if not in forgot password view */}
+              {!isForgotPassword && (
+                <div className="relative">
+                  {/* Glowing accent decoration */}
+                  <div className="absolute -top-28 left-1/2 -translate-x-1/2 w-40 h-40 bg-gradient-to-br from-[#00F0FF]/30 to-[#FF006F]/30 rounded-full blur-3xl" />
 
-                <div className="relative flex border-b border-neutral-700/50 p-1 z-10">
-                  <button
-                    onClick={() => {
-                      setIsLogin(true);
-                      setError("");
-                    }}
-                    className={`flex-1 px-6 py-4 text-center font-medium rounded-t-lg transition-all duration-300
-                      ${
-                        isLogin
-                          ? "text-white bg-gradient-to-r from-[#00F0FF]/10 to-[#FF006F]/10"
-                          : "text-neutral-400 hover:text-white"
-                      }`}
-                  >
-                    <span className={isLogin ? "relative" : ""}>
-                      Login
-                      {isLogin && (
-                        <motion.span
-                          layoutId="activeTab"
-                          className="absolute -bottom-1 left-0 right-0 h-0.5 bg-gradient-to-r from-[#00F0FF] to-[#FF006F]"
-                        />
-                      )}
-                    </span>
-                  </button>
-                  <button
-                    onClick={() => {
-                      setIsLogin(false);
-                      setError("");
-                    }}
-                    className={`flex-1 px-6 py-4 text-center font-medium rounded-t-lg transition-all duration-300
-                      ${
-                        !isLogin
-                          ? "text-white bg-gradient-to-r from-[#00F0FF]/10 to-[#FF006F]/10"
-                          : "text-neutral-400 hover:text-white"
-                      }`}
-                  >
-                    <span className={!isLogin ? "relative" : ""}>
-                      Sign Up
-                      {!isLogin && (
-                        <motion.span
-                          layoutId="activeTab"
-                          className="absolute -bottom-1 left-0 right-0 h-0.5 bg-gradient-to-r from-[#00F0FF] to-[#FF006F]"
-                        />
-                      )}
-                    </span>
-                  </button>
+                  <div className="relative flex border-b border-neutral-700/50 p-1 z-10">
+                    <button
+                      onClick={() => {
+                        setIsLogin(true);
+                        setError("");
+                      }}
+                      className={`flex-1 px-6 py-4 text-center font-medium rounded-t-lg transition-all duration-300
+                        ${
+                          isLogin
+                            ? "text-white bg-gradient-to-r from-[#00F0FF]/10 to-[#FF006F]/10"
+                            : "text-neutral-400 hover:text-white"
+                        }`}
+                    >
+                      <span className={isLogin ? "relative" : ""}>
+                        Login
+                        {isLogin && (
+                          <motion.span
+                            layoutId="activeTab"
+                            className="absolute -bottom-1 left-0 right-0 h-0.5 bg-gradient-to-r from-[#00F0FF] to-[#FF006F]"
+                          />
+                        )}
+                      </span>
+                    </button>
+                    <button
+                      onClick={() => {
+                        setIsLogin(false);
+                        setError("");
+                      }}
+                      className={`flex-1 px-6 py-4 text-center font-medium rounded-t-lg transition-all duration-300
+                        ${
+                          !isLogin
+                            ? "text-white bg-gradient-to-r from-[#00F0FF]/10 to-[#FF006F]/10"
+                            : "text-neutral-400 hover:text-white"
+                        }`}
+                    >
+                      <span className={!isLogin ? "relative" : ""}>
+                        Sign Up
+                        {!isLogin && (
+                          <motion.span
+                            layoutId="activeTab"
+                            className="absolute -bottom-1 left-0 right-0 h-0.5 bg-gradient-to-r from-[#00F0FF] to-[#FF006F]"
+                          />
+                        )}
+                      </span>
+                    </button>
+                  </div>
                 </div>
-              </div>
+              )}
 
               {/* Logo and Title */}
               <div className="text-center pt-8 pb-4">
@@ -127,7 +137,9 @@ const AuthModal = ({ isOpen, onClose }) => {
                   transition={{ delay: 0.4 }}
                   className="mt-1 text-neutral-400"
                 >
-                  {isLogin
+                  {isForgotPassword
+                    ? "Reset your password"
+                    : isLogin
                     ? "Sign in to continue your journey"
                     : "Create an account to get started"}
                 </motion.p>
@@ -149,13 +161,19 @@ const AuthModal = ({ isOpen, onClose }) => {
 
               {/* Form Section */}
               <div className="p-8">
-                {isLogin ? (
+                {isForgotPassword ? (
+                  <ForgotPassword 
+                    setError={setError} 
+                    onBackToLogin={() => setIsForgotPassword(false)}
+                  />
+                ) : isLogin ? (
                   <Login
                     setError={setError}
                     onSuccess={() => {
                       onClose();
                       navigate("/dashboard");
                     }}
+                    onForgotPassword={() => setIsForgotPassword(true)}
                   />
                 ) : (
                   <Signup
@@ -169,22 +187,36 @@ const AuthModal = ({ isOpen, onClose }) => {
               </div>
 
               {/* Footer */}
-              <div className="px-8 pb-8 text-center">
-                <p className="text-neutral-500 text-sm">
-                  {isLogin
-                    ? "Don't have an account?"
-                    : "Already have an account?"}{" "}
+              {!isForgotPassword && (
+                <div className="px-8 pb-8 text-center">
+                  <p className="text-neutral-500 text-sm">
+                    {isLogin
+                      ? "Don't have an account?"
+                      : "Already have an account?"}{" "}
+                    <button
+                      onClick={() => {
+                        setIsLogin(!isLogin);
+                        setError("");
+                      }}
+                      className="text-[#00F0FF] hover:text-[#FF006F] transition-colors duration-300 font-medium"
+                    >
+                      {isLogin ? "Sign up" : "Login"}
+                    </button>
+                  </p>
+                </div>
+              )}
+              
+              {/* Back button for forgot password view */}
+              {isForgotPassword && (
+                <div className="px-8 pb-8 text-center">
                   <button
-                    onClick={() => {
-                      setIsLogin(!isLogin);
-                      setError("");
-                    }}
-                    className="text-[#00F0FF] hover:text-[#FF006F] transition-colors duration-300 font-medium"
+                    onClick={() => setIsForgotPassword(false)}
+                    className="text-[#00F0FF] hover:text-[#FF006F] transition-colors duration-300 text-sm"
                   >
-                    {isLogin ? "Sign up" : "Login"}
+                    ← Back to login
                   </button>
-                </p>
-              </div>
+                </div>
+              )}
             </div>
           </motion.div>
         </>
