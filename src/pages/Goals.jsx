@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import CreateGoalModal from "../components/goals/CreateGoalModal";
+import toast from 'react-hot-toast';
 
 const Goals = () => {
   const [goals, setGoals] = useState([]);
@@ -50,6 +51,16 @@ const Goals = () => {
   const handleMarkAsComplete = async (goalId) => {
     try {
       setIsCompletingGoal(goalId);
+      setError(""); // Clear any previous errors
+
+      // Get token from localStorage (ensuring authentication)
+      const token = localStorage.getItem('token');
+      if (!token) {
+        throw new Error("Authentication required. Please log in again.");
+      }
+
+      console.log("Completing goal with ID:", goalId);
+      console.log("Using token:", token ? "Token exists" : "No token");
 
       const response = await fetch(
         `http://localhost:3001/api/goals/${goalId}/complete`,
@@ -57,44 +68,106 @@ const Goals = () => {
           method: "PUT",
           headers: {
             "Content-Type": "application/json",
+            "Authorization": `Bearer ${token}`
           },
           credentials: "include",
         },
       );
 
+      // Log the response status for debugging
+      console.log("Goal completion response status:", response.status);
+      
       // Get the response data even if the request failed
       const data = await response.json();
+      console.log("Goal completion response data:", data);
       
       if (!response.ok) {
         // Use the error message from the server if available
         throw new Error(data.message || "Failed to complete goal");
       }
 
-      const updatedGoal = data.data;
+      // Extract rewards and achievements from the response
+      const responseData = data.data;
+      const rewards = responseData.rewards;
+      const achievements = responseData.achievements;
 
-      // Update local state
-      setGoals((prevGoals) =>
-        prevGoals.map((goal) => {
-          if (goal._id === goalId) {
-            if (goal.isGroupGoal) {
-              // For group goals, update the completion percentage and user completion status
-              return {
-                ...goal,
-                completionPercentage: updatedGoal.completionPercentage,
-                userCompleted: true,
-                status: updatedGoal.status // This might be 'active' if not all members completed
-              };
-            } else {
-              // For personal goals, simply mark as completed
-              return { ...goal, status: 'completed' };
-            }
+      // After completing a goal, fetch all goals again to ensure we have the latest data
+      // This ensures we don't get a blank screen after completing a group goal
+      await fetchGoals();
+
+      // Show completion reward notification
+      if (rewards) {
+        const totalXP = (rewards.xp || 0) + (rewards.bonusXp || 0);
+        const totalTokens = (rewards.tokens || 0) + (rewards.bonusTokens || 0);
+        
+        // Create notification content
+        let notificationContent = `
+          <div class="flex flex-col items-center">
+            <div class="text-xl font-bold mb-2">Goal Completed! 🎉</div>
+            <div class="flex items-center gap-2 mb-1">
+              <span class="text-yellow-400">+${totalXP} XP</span>
+              ${rewards.bonusXp > 0 ? `<span class="text-green-400 text-sm">(+${rewards.bonusXp} bonus)</span>` : ''}
+            </div>
+            <div class="flex items-center gap-2">
+              <span class="text-yellow-400">+${totalTokens} Tokens</span>
+              ${rewards.bonusTokens > 0 ? `<span class="text-green-400 text-sm">(+${rewards.bonusTokens} bonus)</span>` : ''}
+            </div>
+          </div>
+        `;
+        
+        // Show notification
+        toast.success(
+          <div dangerouslySetInnerHTML={{ __html: notificationContent }} />,
+          {
+            position: "top-right",
+            autoClose: 5000,
+            hideProgressBar: false,
+            closeOnClick: true,
+            pauseOnHover: true,
+            draggable: true,
           }
-          return goal;
-        }),
-      );
+        );
+      } else {
+        // Show a simple success message if no rewards data
+        toast.success("Goal completed successfully!", {
+          position: "top-right",
+          autoClose: 3000,
+        });
+      }
+
+      // If new achievements were unlocked, check achievements in the AchievementContext
+      if (achievements && achievements.unlocked) {
+        // This will trigger the achievement context to fetch updated achievements
+        // and show notifications for newly unlocked achievements
+        if (typeof window !== 'undefined') {
+          // Dispatch a custom event that AchievementContext can listen for
+          const event = new CustomEvent('achievementUpdate', { 
+            detail: { unlocked: true }
+          });
+          window.dispatchEvent(event);
+        }
+      }
+
     } catch (err) {
       console.error("Error completing goal:", err);
       setError(err.message || "Failed to mark goal as complete");
+      
+      // Show error toast
+      toast.error(err.message || "Failed to mark goal as complete", {
+        position: "top-right",
+        autoClose: 5000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+      });
+      
+      // If authentication error, redirect to login
+      if (err.message.includes("Authentication required") || err.message.includes("log in again")) {
+        // Clear token if it's invalid
+        localStorage.removeItem('token');
+        // You can add code here to redirect to login page if needed
+      }
     } finally {
       setIsCompletingGoal(null);
     }

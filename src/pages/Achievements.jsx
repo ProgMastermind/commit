@@ -1,385 +1,504 @@
-import { useState, useEffect } from "react";
-import { motion, AnimatePresence } from "framer-motion";
-import { Tab } from "@headlessui/react";
-import confetti from "canvas-confetti";
-
-// Rarity colors for achievement styling
-const rarityColors = {
-  common: {
-    bg: "from-blue-500/20 to-green-500/20",
-    border: "border-blue-500/30",
-    text: "text-blue-400",
-    progress: "bg-gradient-to-r from-blue-500 to-green-500",
-  },
-  uncommon: {
-    bg: "from-cyan-500/20 to-purple-500/20",
-    border: "border-cyan-500/30",
-    text: "text-cyan-400",
-    progress: "bg-gradient-to-r from-cyan-500 to-purple-500",
-  },
-  rare: {
-    bg: "from-purple-500/20 to-pink-500/20",
-    border: "border-purple-500/30",
-    text: "text-purple-400",
-    progress: "bg-gradient-to-r from-purple-500 to-pink-500",
-  },
-  legendary: {
-    bg: "from-amber-500/20 to-orange-500/20",
-    border: "border-amber-500/30",
-    text: "text-amber-400",
-    progress: "bg-gradient-to-r from-amber-500 to-orange-500",
-  },
-};
+import React, { useState, useEffect, useMemo } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { FiSearch, FiFilter, FiAward, FiLock, FiClock, FiChevronDown, FiChevronUp, FiRefreshCw } from 'react-icons/fi';
+import { Tooltip } from 'react-tooltip';
+import AchievementLeaderboard from '../components/achievements/AchievementLeaderboard';
+import AchievementCard from '../components/achievements/AchievementCard';
+import { useAchievements } from '../components/achievements/AchievementContext';
 
 const Achievements = () => {
-  const [achievements, setAchievements] = useState([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState("");
-  const [selectedAchievement, setSelectedAchievement] = useState(null);
-  const [filter, setFilter] = useState("all");
-  const [searchQuery, setSearchQuery] = useState("");
-  const [showConfetti, setShowConfetti] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [filterCategory, setFilterCategory] = useState('all');
+  const [filterRarity, setFilterRarity] = useState('all');
+  const [activeTab, setActiveTab] = useState('all');
+  const [expandedCategories, setExpandedCategories] = useState({});
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  
+  // Use the achievement context for state management
+  const { 
+    achievements = { unlocked: [], inProgress: [], locked: [] },
+    stats = { total: 0, unlocked: 0, inProgress: 0, locked: 0, completionRate: 0 },
+    isLoading = false,
+    error = null,
+    isAuthenticated = false,
+    fetchAchievements,
+    checkForNewAchievements,
+    showAchievementNotification = () => {}
+  } = useAchievements() || {};
 
+  // Fetch achievements data when component mounts or authentication changes
   useEffect(() => {
-    fetchAchievements();
-  }, []);
-
-  useEffect(() => {
-    if (showConfetti) {
-      triggerConfetti();
-      const timer = setTimeout(() => {
-        setShowConfetti(false);
-      }, 2500);
-      return () => clearTimeout(timer);
+    if (isAuthenticated) {
+      fetchAchievements();
+      // Also check for any new achievements
+      checkForNewAchievements();
     }
-  }, [showConfetti]);
+  }, [isAuthenticated, fetchAchievements, checkForNewAchievements]);
 
-  const fetchAchievements = async () => {
-    setIsLoading(true);
-    try {
-      const response = await fetch("http://localhost:3001/api/achievements", {
-        credentials: "include",
-      });
+  // Handle refresh button click
+  const handleRefresh = async () => {
+    if (isAuthenticated && !isRefreshing) {
+      setIsRefreshing(true);
+      await fetchAchievements();
+      setTimeout(() => setIsRefreshing(false), 1000); // Minimum animation time
+    }
+  };
 
-      if (!response.ok) {
-        throw new Error("Failed to fetch achievements");
+  // Filter achievements based on search, category, and rarity
+  const filteredAchievements = useMemo(() => {
+    let filtered = [];
+    
+    if (activeTab === 'all') {
+      filtered = [...(achievements.unlocked || []), ...(achievements.inProgress || []), ...(achievements.locked || [])];
+    } else if (activeTab === 'unlocked') {
+      filtered = [...(achievements.unlocked || [])];
+    } else if (activeTab === 'in-progress') {
+      filtered = [...(achievements.inProgress || [])];
+    } else if (activeTab === 'locked') {
+      filtered = [...(achievements.locked || [])];
+    }
+    
+    // Apply search filter
+    if (searchQuery) {
+      filtered = filtered.filter(achievement => 
+        achievement.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        achievement.description?.toLowerCase().includes(searchQuery.toLowerCase())
+      );
+    }
+    
+    // Apply category filter
+    if (filterCategory !== 'all') {
+      filtered = filtered.filter(achievement => 
+        achievement.category === filterCategory
+      );
+    }
+    
+    // Apply rarity filter
+    if (filterRarity !== 'all') {
+      filtered = filtered.filter(achievement => 
+        achievement.rarity === filterRarity
+      );
+    }
+    
+    return filtered;
+  }, [achievements, activeTab, searchQuery, filterCategory, filterRarity]);
+
+  // Get unique categories for filter dropdown
+  const categories = useMemo(() => {
+    const allAchievements = [
+      ...(achievements.unlocked || []), 
+      ...(achievements.inProgress || []), 
+      ...(achievements.locked || [])
+    ];
+    const categorySet = new Set(allAchievements.map(a => a.category).filter(Boolean));
+    return ['all', ...Array.from(categorySet)];
+  }, [achievements]);
+
+  // Get unique rarities for filter dropdown
+  const rarities = useMemo(() => {
+    const allAchievements = [
+      ...(achievements.unlocked || []), 
+      ...(achievements.inProgress || []), 
+      ...(achievements.locked || [])
+    ];
+    const raritySet = new Set(allAchievements.map(a => a.rarity).filter(Boolean));
+    return ['all', ...Array.from(raritySet)];
+  }, [achievements]);
+
+  // Group achievements by category for display
+  const achievementsByCategory = useMemo(() => {
+    const grouped = {};
+    
+    filteredAchievements.forEach(achievement => {
+      const category = achievement.category || 'uncategorized';
+      if (!grouped[category]) {
+        grouped[category] = [];
       }
+      grouped[category].push(achievement);
+    });
+    
+    return grouped;
+  }, [filteredAchievements]);
 
-      const data = await response.json();
-      setAchievements(data.data || []);
-    } catch (err) {
-      console.error("Error fetching achievements:", err);
-      setError(err.message);
-    } finally {
-      setIsLoading(false);
-    }
+  // Toggle category expansion
+  const toggleCategory = (category) => {
+    setExpandedCategories(prev => ({
+      ...prev,
+      [category]: !prev[category]
+    }));
   };
 
-  const getFilteredAchievements = () => {
-    return achievements.filter((achievement) => {
-      const matchesFilter =
-        filter === "all" ||
-        (filter === "unlocked" && achievement.unlockedAt) ||
-        (filter === "in-progress" && !achievement.unlockedAt) ||
-        achievement.category === filter;
-
-      const matchesSearch =
-        !searchQuery ||
-        achievement.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        achievement.description.toLowerCase().includes(searchQuery.toLowerCase());
-
-      return matchesFilter && matchesSearch;
+  // Initialize all categories as expanded
+  useEffect(() => {
+    const initialExpanded = {};
+    Object.keys(achievementsByCategory).forEach(category => {
+      initialExpanded[category] = true;
     });
-  };
+    setExpandedCategories(initialExpanded);
+  }, [achievementsByCategory]);
 
-  const triggerConfetti = () => {
-    confetti({
-      particleCount: 100,
-      spread: 70,
-      origin: { y: 0.6 },
-      colors: ["#00F0FF", "#FF006F", "#FFD700"],
-    });
+  // Format category name for display
+  const formatCategoryName = (category) => {
+    if (category === 'uncategorized') return 'Uncategorized';
+    return category.charAt(0).toUpperCase() + category.slice(1);
   };
 
   return (
-    <div className="space-y-8">
-      {/* Header Section with Decorative Elements */}
-      <header className="relative">
-        {/* Decorative gradient orb */}
+    <div className="container mx-auto px-4 py-8 max-w-7xl">
+      <header className="mb-8 relative">
         <div className="absolute -top-20 -left-20 w-40 h-40 bg-gradient-to-br from-[#00F0FF]/20 to-[#FF006F]/20 rounded-full blur-3xl opacity-50" />
-
-        <div className="relative flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-          <motion.div
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.3 }}
+        <div className="absolute -bottom-10 -right-10 w-40 h-40 bg-gradient-to-br from-purple-500/20 to-amber-500/20 rounded-full blur-3xl opacity-30" />
+        
+        <div className="relative z-10 flex justify-between items-center">
+          <div>
+            <h1 className="text-3xl font-bold text-white">Achievements</h1>
+            <p className="text-neutral-400 mt-1">Track your progress and unlock rewards</p>
+          </div>
+          <motion.button
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            onClick={handleRefresh}
+            disabled={isRefreshing || isLoading}
+            className="bg-[#111111] hover:bg-[#1a1a1a] text-white p-2 rounded-full border border-neutral-800 transition-colors"
+            aria-label="Refresh achievements"
           >
-            <div className="relative">
-              <h1 className="text-3xl font-bold bg-gradient-to-r from-[#00F0FF] to-[#FF006F] text-transparent bg-clip-text">
-                Your Achievements
-              </h1>
-              {/* Decorative underline */}
-              <div className="absolute -bottom-2 left-0 h-0.5 w-20 bg-gradient-to-r from-[#00F0FF] to-[#FF006F] rounded-full"></div>
-            </div>
-
-            <p className="text-neutral-400 mt-4">
-              Track your progress and celebrate your wins
-            </p>
-          </motion.div>
+            <FiRefreshCw className={`text-xl ${isRefreshing ? 'animate-spin text-[#00F0FF]' : 'text-neutral-400'}`} />
+          </motion.button>
         </div>
       </header>
-
-      {/* Achievement Grid */}
-      <div className="mt-6">
-        {isLoading ? (
-          <div className="flex justify-center items-center h-64">
-            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-[#00F0FF]"></div>
+      
+      {/* Stats Cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <motion.div 
+          whileHover={{ scale: 1.02 }}
+          className="bg-[#111111] rounded-xl p-6 border border-neutral-800 hover:border-neutral-700 transition-all"
+        >
+          <p className="text-neutral-400">Total Achievements</p>
+          <p className="text-3xl font-bold text-white">{stats.total}</p>
+          <div className="w-full h-1 bg-neutral-800 mt-4">
+            <div className="h-full bg-white" style={{ width: '100%' }}></div>
           </div>
-        ) : error ? (
-          <div className="text-center p-8 bg-red-500/10 rounded-xl border border-red-500/20">
-            <p className="text-red-500">{error}</p>
-            <button
-              onClick={fetchAchievements}
-              className="mt-4 px-4 py-2 bg-neutral-800 rounded-lg text-white hover:bg-neutral-700 transition-colors"
-            >
-              Try Again
-            </button>
+        </motion.div>
+        <motion.div 
+          whileHover={{ scale: 1.02 }}
+          className="bg-[#111111] rounded-xl p-6 border border-neutral-800 hover:border-emerald-700 transition-all"
+        >
+          <p className="text-neutral-400">Unlocked</p>
+          <p className="text-3xl font-bold text-emerald-500">{stats.unlocked}</p>
+          <div className="w-full h-1 bg-neutral-800 mt-4">
+            <div className="h-full bg-emerald-500" style={{ width: `${(stats.unlocked / stats.total) * 100}%` }}></div>
           </div>
-        ) : getFilteredAchievements().length === 0 ? (
-          <div className="text-center p-8 bg-neutral-800/50 rounded-xl border border-neutral-700/50">
-            <p className="text-neutral-400">No achievements found</p>
-            {filter !== "all" && (
-              <button
-                onClick={() => setFilter("all")}
-                className="mt-4 px-4 py-2 bg-neutral-800 rounded-lg text-white hover:bg-neutral-700 transition-colors"
-              >
-                View All Achievements
-              </button>
-            )}
+        </motion.div>
+        <motion.div 
+          whileHover={{ scale: 1.02 }}
+          className="bg-[#111111] rounded-xl p-6 border border-neutral-800 hover:border-amber-700 transition-all"
+        >
+          <p className="text-neutral-400">In Progress</p>
+          <p className="text-3xl font-bold text-amber-500">{stats.inProgress}</p>
+          <div className="w-full h-1 bg-neutral-800 mt-4">
+            <div className="h-full bg-amber-500" style={{ width: `${(stats.inProgress / stats.total) * 100}%` }}></div>
           </div>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {getFilteredAchievements().map((achievement) => (
-              <motion.div
-                key={achievement._id}
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-                onClick={() => {
-                  setSelectedAchievement(achievement);
-                  if (achievement.unlockedAt && !showConfetti) {
-                    setShowConfetti(true);
-                  }
-                }}
-                className={`bg-[#111111] rounded-xl p-6 border ${
-                  rarityColors[achievement.rarity || "common"].border
-                } hover:border-[#00F0FF] transition-all duration-300 relative overflow-hidden cursor-pointer`}
-              >
-                {/* Background gradient based on rarity */}
-                <div
-                  className={`absolute inset-0 bg-gradient-to-br ${
-                    rarityColors[achievement.rarity || "common"].bg
-                  } opacity-20`}
-                ></div>
-
-                <div className="relative flex items-start justify-between mb-4">
-                  <div className="flex items-center">
-                    <div className="h-12 w-12 rounded-lg bg-gradient-to-r from-[#00F0FF] to-[#FF006F] flex items-center justify-center text-xl">
-                      {achievement.icon || "🏆"}
-                    </div>
-                    <div className="ml-4">
-                      <h3 className="font-semibold text-white">
-                        {achievement.title}
-                      </h3>
-                      <p className="text-sm text-neutral-400">
-                        {achievement.category}
-                      </p>
-                    </div>
-                  </div>
-                  {achievement.xpReward && (
-                    <span className="text-[#FFD700] font-bold">
-                      +{achievement.xpReward} XP
-                    </span>
-                  )}
-                </div>
-
-                <p className="text-neutral-300 text-sm mb-4">
-                  {achievement.description}
-                </p>
-
-                <div className="space-y-2">
-                  {/* Progress bar */}
-                  <div className="w-full h-2 bg-neutral-800 rounded-full overflow-hidden">
-                    <div
-                      className={`h-full ${
-                        rarityColors[achievement.rarity || "common"].progress
-                      }`}
-                      style={{ width: `${achievement.progress}%` }}
-                    ></div>
-                  </div>
-
-                  <div className="flex justify-between text-sm">
-                    <span
-                      className={`${
-                        rarityColors[achievement.rarity || "common"].text
-                      } font-medium capitalize`}
-                    >
-                      {achievement.rarity || "common"}
-                    </span>
-                    <span className="text-neutral-400">
-                      {achievement.unlockedAt
-                        ? `Unlocked on ${new Date(
-                            achievement.unlockedAt
-                          ).toLocaleDateString()}`
-                        : `${achievement.progress}% complete`}
-                    </span>
-                  </div>
-                </div>
-              </motion.div>
-            ))}
+        </motion.div>
+        <motion.div 
+          whileHover={{ scale: 1.02 }}
+          className="bg-[#111111] rounded-xl p-6 border border-neutral-800 hover:border-[#00F0FF] transition-all"
+        >
+          <p className="text-neutral-400">Completion Rate</p>
+          <p className="text-3xl font-bold text-[#00F0FF]">{stats.completionRate}%</p>
+          <div className="w-full h-1 bg-neutral-800 mt-4">
+            <div className="h-full bg-gradient-to-r from-[#00F0FF] to-[#FF006F]" style={{ width: `${stats.completionRate}%` }}></div>
           </div>
-        )}
+        </motion.div>
       </div>
-
-      {/* Achievement Detail Modal */}
-      <AnimatePresence>
-        {selectedAchievement && (
-          <>
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 0.6 }}
-              exit={{ opacity: 0 }}
-              className="fixed inset-0 bg-black/70 backdrop-blur-sm z-40"
-              onClick={() => setSelectedAchievement(null)}
-            />
-
-            <motion.div
-              initial={{ opacity: 0, y: 20, scale: 0.95 }}
-              animate={{ opacity: 1, y: 0, scale: 1 }}
-              exit={{ opacity: 0, y: 20, scale: 0.95 }}
-              transition={{ type: "spring", damping: 25 }}
-              className="fixed inset-0 z-50 flex items-center justify-center p-4"
+      
+      {/* Main Content Area */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <div className="lg:col-span-2">
+          {/* Authentication Check */}
+          {!isAuthenticated ? (
+            <motion.div 
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="bg-[#111111] rounded-xl p-8 border border-neutral-800 text-center"
             >
-              <div className="w-full max-w-md overflow-hidden rounded-2xl bg-gradient-to-b from-neutral-800/80 to-neutral-900/90 backdrop-blur-xl border border-neutral-700/50 shadow-[0_20px_60px_-10px_rgba(0,0,0,0.5)]">
-                {/* Header */}
-                <div className="relative p-6 border-b border-neutral-700/50">
-                  {/* Decorative element */}
-                  <div className="absolute -top-24 left-0 w-40 h-40 bg-gradient-to-br from-[#00F0FF]/20 to-[#FF006F]/20 rounded-full blur-3xl opacity-50" />
-
-                  <div className="relative flex items-center justify-between">
-                    <h2 className="text-xl font-bold text-white">
-                      Achievement Details
-                    </h2>
-                    <button
-                      onClick={() => setSelectedAchievement(null)}
-                      className="p-1 rounded-lg text-neutral-400 hover:text-white hover:bg-neutral-800/50 transition-colors"
-                    >
-                      <svg
-                        className="w-5 h-5"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M6 18L18 6M6 6l12 12"
-                        />
-                      </svg>
-                    </button>
-                  </div>
-                </div>
-
-                {/* Content */}
-                <div className="p-6 space-y-6">
-                  <div className="flex items-center gap-4">
-                    <div
-                      className={`h-16 w-16 rounded-xl flex items-center justify-center text-2xl bg-gradient-to-br ${
-                        rarityColors[selectedAchievement.rarity || "common"].bg
-                      } ${
-                        rarityColors[selectedAchievement.rarity || "common"]
-                          .border
-                      }`}
-                    >
-                      {selectedAchievement.icon || "🏆"}
-                    </div>
-                    <div>
-                      <h3 className="text-xl font-bold text-white">
-                        {selectedAchievement.title}
-                      </h3>
-                      <p
-                        className={`${
-                          rarityColors[selectedAchievement.rarity || "common"]
-                            .text
-                        } capitalize`}
-                      >
-                        {selectedAchievement.rarity || "common"} •{" "}
-                        {selectedAchievement.category}
-                      </p>
-                    </div>
-                  </div>
-
-                  <div className="space-y-4">
-                    <div>
-                      <h4 className="text-sm font-medium text-neutral-400 mb-1">
-                        Description
-                      </h4>
-                      <p className="text-white">
-                        {selectedAchievement.description}
-                      </p>
-                    </div>
-
-                    <div>
-                      <h4 className="text-sm font-medium text-neutral-400 mb-1">
-                        Reward
-                      </h4>
-                      <p className="text-[#FFD700] font-bold">
-                        +{selectedAchievement.xpReward} XP
-                      </p>
-                    </div>
-
-                    <div>
-                      <h4 className="text-sm font-medium text-neutral-400 mb-1">
-                        Progress
-                      </h4>
-                      <div className="w-full h-3 bg-neutral-800 rounded-full overflow-hidden">
-                        <div
-                          className={`h-full ${
-                            rarityColors[
-                              selectedAchievement.rarity || "common"
-                            ].progress
-                          }`}
-                          style={{ width: `${selectedAchievement.progress}%` }}
-                        ></div>
-                      </div>
-                      <p className="text-right text-sm text-neutral-400 mt-1">
-                        {selectedAchievement.progress}% complete
-                      </p>
-                    </div>
-
-                    {selectedAchievement.unlockedAt && (
-                      <div>
-                        <h4 className="text-sm font-medium text-neutral-400 mb-1">
-                          Unlocked On
-                        </h4>
-                        <p className="text-white">
-                          {new Date(
-                            selectedAchievement.unlockedAt
-                          ).toLocaleDateString("en-US", {
-                            year: "numeric",
-                            month: "long",
-                            day: "numeric",
-                          })}
-                        </p>
-                      </div>
-                    )}
-                  </div>
+              <FiLock className="mx-auto text-4xl text-neutral-500 mb-4" />
+              <h3 className="text-xl font-semibold text-white mb-2">Authentication Required</h3>
+              <p className="text-neutral-400 mb-4">Please log in to view your achievements</p>
+            </motion.div>
+          ) : isLoading ? (
+            <div className="bg-[#111111] rounded-xl p-8 border border-neutral-800">
+              <div className="animate-pulse space-y-4">
+                <div className="h-8 bg-neutral-800 rounded w-1/3"></div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {[...Array(6)].map((_, i) => (
+                    <div key={i} className="h-40 bg-neutral-800 rounded"></div>
+                  ))}
                 </div>
               </div>
+            </div>
+          ) : error ? (
+            <motion.div 
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="bg-[#111111] rounded-xl p-8 border border-neutral-800 text-center"
+            >
+              <p className="text-red-400">{error}</p>
+              <button 
+                onClick={handleRefresh}
+                className="mt-4 px-4 py-2 bg-neutral-800 hover:bg-neutral-700 text-white rounded-lg transition-colors"
+              >
+                Try Again
+              </button>
             </motion.div>
-          </>
-        )}
-      </AnimatePresence>
+          ) : (
+            <>
+              {/* Search and Filter */}
+              <div className="bg-[#111111] rounded-xl p-6 border border-neutral-800 mb-6">
+                <div className="flex flex-col md:flex-row gap-4">
+                  <div className="relative flex-1">
+                    <FiSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-neutral-500" />
+                    <input
+                      type="text"
+                      placeholder="Search achievements..."
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      className="w-full bg-[#0a0a0a] border border-neutral-800 rounded-lg py-2 pl-10 pr-4 text-white focus:outline-none focus:border-[#00F0FF]"
+                    />
+                  </div>
+                  
+                  <div className="flex gap-2">
+                    <div className="relative">
+                      <FiFilter className="absolute left-3 top-1/2 transform -translate-y-1/2 text-neutral-500" />
+                      <select
+                        value={filterCategory}
+                        onChange={(e) => setFilterCategory(e.target.value)}
+                        className="bg-[#0a0a0a] border border-neutral-800 rounded-lg py-2 pl-10 pr-8 text-white focus:outline-none focus:border-[#00F0FF] appearance-none"
+                      >
+                        <option value="all">All Categories</option>
+                        {categories.filter(c => c !== 'all').map(category => (
+                          <option key={category} value={category}>
+                            {formatCategoryName(category)}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                    
+                    <div className="relative">
+                      <select
+                        value={filterRarity}
+                        onChange={(e) => setFilterRarity(e.target.value)}
+                        className="bg-[#0a0a0a] border border-neutral-800 rounded-lg py-2 px-4 text-white focus:outline-none focus:border-[#00F0FF] appearance-none"
+                      >
+                        <option value="all">All Rarities</option>
+                        {rarities.filter(r => r !== 'all').map(rarity => (
+                          <option key={rarity} value={rarity}>
+                            {rarity.charAt(0).toUpperCase() + rarity.slice(1)}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+                </div>
+                
+                {/* Tabs */}
+                <div className="flex border-b border-neutral-800 mt-6 overflow-x-auto scrollbar-hide">
+                  <button
+                    onClick={() => setActiveTab('all')}
+                    className={`px-4 py-2 font-medium whitespace-nowrap ${activeTab === 'all' ? 'text-[#00F0FF] border-b-2 border-[#00F0FF]' : 'text-neutral-400 hover:text-white'}`}
+                  >
+                    All ({stats.total})
+                  </button>
+                  <button
+                    onClick={() => setActiveTab('unlocked')}
+                    className={`px-4 py-2 font-medium whitespace-nowrap ${activeTab === 'unlocked' ? 'text-[#00F0FF] border-b-2 border-[#00F0FF]' : 'text-neutral-400 hover:text-white'}`}
+                  >
+                    <FiAward className="inline mr-1" />
+                    Unlocked ({stats.unlocked})
+                  </button>
+                  <button
+                    onClick={() => setActiveTab('in-progress')}
+                    className={`px-4 py-2 font-medium whitespace-nowrap ${activeTab === 'in-progress' ? 'text-[#00F0FF] border-b-2 border-[#00F0FF]' : 'text-neutral-400 hover:text-white'}`}
+                  >
+                    <FiClock className="inline mr-1" />
+                    In Progress ({stats.inProgress})
+                  </button>
+                  <button
+                    onClick={() => setActiveTab('locked')}
+                    className={`px-4 py-2 font-medium whitespace-nowrap ${activeTab === 'locked' ? 'text-[#00F0FF] border-b-2 border-[#00F0FF]' : 'text-neutral-400 hover:text-white'}`}
+                  >
+                    <FiLock className="inline mr-1" />
+                    Locked ({stats.total - stats.unlocked - stats.inProgress})
+                  </button>
+                </div>
+              </div>
+              
+              {/* Achievement Categories */}
+              {filteredAchievements.length === 0 ? (
+                <div className="bg-[#111111] rounded-xl p-8 border border-neutral-800 text-center">
+                  <p className="text-neutral-400">No achievements found matching your filters</p>
+                </div>
+              ) : (
+                <div className="space-y-6">
+                  {Object.entries(achievementsByCategory).map(([category, categoryAchievements]) => (
+                    <div key={category} className="bg-[#111111] rounded-xl border border-neutral-800 overflow-hidden">
+                      {/* Category Header */}
+                      <div 
+                        className="p-4 flex justify-between items-center cursor-pointer hover:bg-[#1a1a1a] transition-colors"
+                        onClick={() => toggleCategory(category)}
+                      >
+                        <div className="flex items-center">
+                          <div className="w-8 h-8 rounded-full bg-gradient-to-r from-[#00F0FF] to-[#FF006F] flex items-center justify-center mr-3">
+                            {category === 'consistency' && '🔄'}
+                            {category === 'streaks' && '🔥'}
+                            {category === 'reading' && '📚'}
+                            {category === 'fitness' && '💪'}
+                            {category === 'wellness' && '🧘'}
+                            {category === 'social' && '👥'}
+                            {category === 'productivity' && '⚡'}
+                            {category === 'creativity' && '🎨'}
+                            {category === 'finance' && '💰'}
+                            {category === 'meta' && '🏆'}
+                            {!['consistency', 'streaks', 'reading', 'fitness', 'wellness', 'social', 'productivity', 'creativity', 'finance', 'meta'].includes(category) && '🎯'}
+                          </div>
+                          <div>
+                            <h3 className="font-semibold text-white">{formatCategoryName(category)}</h3>
+                            <p className="text-xs text-neutral-400">{categoryAchievements.length} achievements</p>
+                          </div>
+                        </div>
+                        {expandedCategories[category] ? (
+                          <FiChevronUp className="text-neutral-400" />
+                        ) : (
+                          <FiChevronDown className="text-neutral-400" />
+                        )}
+                      </div>
+                      
+                      {/* Category Achievements */}
+                      <AnimatePresence>
+                        {expandedCategories[category] && (
+                          <motion.div
+                            initial={{ height: 0, opacity: 0 }}
+                            animate={{ height: 'auto', opacity: 1 }}
+                            exit={{ height: 0, opacity: 0 }}
+                            transition={{ duration: 0.3 }}
+                          >
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 pt-0">
+                              {categoryAchievements.map(achievement => (
+                                <div key={achievement._id} className="h-full">
+                                  <AchievementCard 
+                                    achievement={achievement} 
+                                    isNew={achievement.isNew} 
+                                  />
+                                </div>
+                              ))}
+                            </div>
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </>
+          )}
+        </div>
+        
+        {/* Sidebar */}
+        <div className="space-y-6">
+          {/* Leaderboard */}
+          <div className="bg-[#111111] rounded-xl border border-neutral-800 overflow-hidden">
+            <div className="p-4 border-b border-neutral-800">
+              <h3 className="font-semibold text-white">Achievement Leaderboard</h3>
+              <p className="text-xs text-neutral-400">Top achievers this month</p>
+            </div>
+            <div className="p-4">
+              <AchievementLeaderboard />
+            </div>
+          </div>
+          
+          {/* Achievement Progression */}
+          {isAuthenticated && !isLoading && !error && (
+            <motion.div 
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="bg-[#111111] rounded-xl border border-neutral-800 overflow-hidden"
+            >
+              <div className="p-4 border-b border-neutral-800">
+                <h3 className="font-semibold text-white">Your Progress</h3>
+                <p className="text-xs text-neutral-400">Achievement journey</p>
+              </div>
+              <div className="p-4">
+                {/* Rarity Progress Bars */}
+                <div className="space-y-4">
+                  {rarities.filter(r => r !== 'all').map(rarity => {
+                    const rarityAchievements = filteredAchievements.filter(a => a.rarity === rarity);
+                    const unlockedCount = rarityAchievements.filter(a => a.unlockedAt || a.unlocked).length;
+                    const totalCount = rarityAchievements.length;
+                    const percentage = totalCount > 0 ? Math.round((unlockedCount / totalCount) * 100) : 0;
+                    
+                    return (
+                      <div key={rarity} className="space-y-1">
+                        <div className="flex justify-between text-sm">
+                          <span className="capitalize text-neutral-300">{rarity}</span>
+                          <span className="text-neutral-400">{unlockedCount}/{totalCount}</span>
+                        </div>
+                        <div className="w-full h-2 bg-neutral-800 rounded-full overflow-hidden">
+                          <motion.div 
+                            initial={{ width: 0 }}
+                            animate={{ width: `${percentage}%` }}
+                            transition={{ duration: 1 }}
+                            className={`h-full ${
+                              rarity === 'common' ? 'bg-gradient-to-r from-blue-500 to-green-500' :
+                              rarity === 'uncommon' ? 'bg-gradient-to-r from-cyan-500 to-purple-500' :
+                              rarity === 'rare' ? 'bg-gradient-to-r from-purple-500 to-pink-500' :
+                              'bg-gradient-to-r from-amber-500 to-orange-500'
+                            }`}
+                          ></motion.div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+                
+                {/* Next Achievement to Unlock */}
+                {achievements.inProgress && achievements.inProgress.length > 0 && (
+                  <div className="mt-6">
+                    <h4 className="text-sm font-semibold text-white mb-2">Next Achievement</h4>
+                    <div className="bg-[#0a0a0a] rounded-lg p-3 border border-neutral-800">
+                      {/* Show the in-progress achievement with highest progress */}
+                      {achievements.inProgress
+                        .sort((a, b) => {
+                          const aProgress = a.progressPercentage || (a.progress && a.criteria?.threshold ? (a.progress / a.criteria.threshold) * 100 : 0);
+                          const bProgress = b.progressPercentage || (b.progress && b.criteria?.threshold ? (b.progress / b.criteria.threshold) * 100 : 0);
+                          return bProgress - aProgress;
+                        })
+                        .slice(0, 1)
+                        .map(achievement => (
+                          <div key={achievement._id} className="flex items-center">
+                            <div className="w-10 h-10 rounded-lg bg-neutral-800 flex items-center justify-center text-xl mr-3">
+                              {achievement.icon || "🏆"}
+                            </div>
+                            <div>
+                              <h5 className="font-medium text-white">{achievement.title}</h5>
+                              <div className="w-full h-1.5 bg-neutral-800 rounded-full mt-1">
+                                <div 
+                                  className="h-full bg-gradient-to-r from-[#00F0FF] to-[#FF006F]" 
+                                  style={{ 
+                                    width: `${achievement.progressPercentage || (achievement.progress && achievement.criteria?.threshold ? (achievement.progress / achievement.criteria.threshold) * 100 : 0)}%` 
+                                  }}
+                                ></div>
+                              </div>
+                            </div>
+                          </div>
+                        ))
+                      }
+                    </div>
+                  </div>
+                )}
+              </div>
+            </motion.div>
+          )}
+        </div>
+      </div>
     </div>
   );
 };

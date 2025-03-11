@@ -34,8 +34,17 @@ const Login = ({ setError, onSuccess, onForgotPassword }) => {
         throw new Error(data.message || "Login failed");
       }
 
+      // Store token in localStorage for API requests
+      if (data.token) {
+        localStorage.setItem('token', data.token);
+        console.log('Token saved to localStorage');
+      } else {
+        console.warn('No token received from server');
+      }
+
       onSuccess();
     } catch (err) {
+      console.error('Login error:', err);
       setError(err.message || "Something went wrong");
     } finally {
       setIsLoading(false);
